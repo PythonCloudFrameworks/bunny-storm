@@ -28,5 +28,16 @@ Todo
 ----
 * Implement Prometheus metrics support.
 * Enable passing an existing channel
-* Write Tests
 * Support asyncio ioloop
+* Create setup.py and configure as a Pyhton package
+* Write Tests
+
+Notes
+-----
+This package implementation inspired by various implementations that I have encountered over the years, especially Python 2.7 implementations.
+The current version including improvements and adjustments that enables to integrate with the most updated frameworks at the time that this package was developed:
+* Python 3.8
+* pika 1.1.0
+* tornado 6.0.4
+* RabbitMQ Server 3.8.3 on Ubuntu 18
+ 
