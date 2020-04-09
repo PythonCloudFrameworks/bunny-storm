@@ -9,7 +9,7 @@ This library offers asynchronous implementation of RabbitMQ connector that suppo
 Tornado-Bunny connector is all-in-one connector that support number of functionalities:
 1. publish - publish message.
 2. receive - consume messages from a queue. If received properties is not none, it publishes result back to "reply_to" queue.
-3. rpc - publish a message with replay_to properties (coorlation_id and queue name), wait for answer message and return value. 
+3. rpc - publish a message with replay_to properties (correlation_id and queue name), wait for answer message and return value. 
 
 Examples
 -------
