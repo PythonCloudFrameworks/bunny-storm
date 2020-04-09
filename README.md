@@ -11,9 +11,9 @@ Tornado-Bunny connector is all-in-one connector that support number of functiona
 2. receive - consume messages from a queue. If received properties is not none, it publishes result back to "reply_to" queue.
 3. rpc - publish a message with replay_to properties (coorlation_id and queue name), wait for answer message and return value. 
 
-Example
+Examples
 -------
-Here is an example of 2 Microservices implementing a fully scalable application that calculate a number in the Fibonacci series.
+Example of 2 Microservices implementing a fully scalable application that calculate a number in the Fibonacci series while implementing [RabbitMQ Remote procedure call (RPC)](https://www.rabbitmq.com/tutorials/tutorial-six-python.html) pattern, can be found at the examples directory.
 
 Architecture
 ------------
@@ -30,5 +30,3 @@ Todo
 * Enable passing an existing channel
 * Write Tests
 * Support asyncio ioloop
-
-
