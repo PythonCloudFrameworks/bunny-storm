@@ -19,6 +19,21 @@ pip install -U git+https://github.com/odedshimon/tornado-bunny
 
 Examples
 -------
+### Simple Reciever (print messages from queue)
+```python
+import tornado.ioloop
+from tornado_bunny import TornadoAdapter
+
+RABBIT_URI = "amqp://guest:guest@127.0.0.1:5672/"
+
+if __name__ == "__main__":
+    io_loop = tornado.ioloop.IOLoop.instance()
+    rabbit_connection = TornadoAdapter(rabbitmq_url=RABBIT_URI, io_loop=io_loop)
+    rabbit_connection.receive(exchange="some_ex", routing_key="some_rk", queue_name="some_q", handler=lambda msg: print(msg))
+    io_loop.start()
+```
+
+### Full Microservices Using RPC pattern
 Example of 2 Microservices implementing a fully scalable application that calculates a number in the Fibonacci series while implementing [RabbitMQ Remote procedure call (RPC)](https://www.rabbitmq.com/tutorials/tutorial-six-python.html) pattern, can be found at the examples directory.
 
 Architecture
