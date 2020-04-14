@@ -1,6 +1,6 @@
 Tornado-Bunny
 =============
-Tornado-Bunny is a RabbitMQ connector library for Python that is fully integrated with [Tornado Framework](http://www.tornadoweb.org).
+RabbitMQ connector library for Python that is fully integrated with [Tornado Framework](http://www.tornadoweb.org).
 
 Introduction
 ------------
@@ -19,7 +19,7 @@ pip install -U git+https://github.com/odedshimon/tornado-bunny
 
 Examples
 -------
-### Simple Reciever (print messages from queue)
+#### Simple Reciever (print messages from queue)
 ```python
 import tornado.ioloop
 from tornado_bunny import TornadoAdapter
@@ -33,7 +33,7 @@ if __name__ == "__main__":
     io_loop.start()
 ```
 
-### Full Microservices Using RPC pattern
+#### Full Microservices Using RPC pattern
 Example of 2 Microservices implementing a fully scalable application that calculates a number in the Fibonacci series while implementing [RabbitMQ Remote procedure call (RPC)](https://www.rabbitmq.com/tutorials/tutorial-six-python.html) pattern, can be found at the examples directory.
 
 Architecture
