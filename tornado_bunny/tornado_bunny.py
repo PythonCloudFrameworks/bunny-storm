@@ -10,7 +10,7 @@ from tornado.concurrent import Future
 from tornado.ioloop import IOLoop
 from tornado.queues import Queue
 
-from AsyncConnection import AsyncConnection
+from .async_connection import AsyncConnection
 
 
 class TornadoAdapter(object):
@@ -321,3 +321,4 @@ class TornadoAdapter(object):
 
     def status_check(self):
         return self._receive_conn.status_ok and self._publish_conn.status_ok
+

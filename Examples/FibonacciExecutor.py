@@ -1,7 +1,7 @@
 import sys
 import asyncio
 import tornado.ioloop
-from RabbitAdapter import TornadoAdapter
+from tornado_bunny import TornadoAdapter
 
 RABBIT_URI = "amqp://test_user:pass123@192.168.56.102:5672/"
 
