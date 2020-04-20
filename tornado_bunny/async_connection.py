@@ -8,7 +8,7 @@ from tornado import gen
 from tornado.queues import Queue
 
 
-class AsyncConnection(object):
+class AsyncConnection:
     INIT_STATUS = "init"
     CONNECTING_STATUS = "connecting"
     OPEN_STATUS = "open"
