@@ -7,10 +7,10 @@ tox==3.14.0
 coverage==4.5.4
 Sphinx==1.8.5
 twine==1.14.0
-cached_property
+cached_property==1.5.1
 
 pytest==4.6.5
 pytest-runner==5.1
 
-tornado===6.0.4
+tornado==6.0.4
 pika==1.1.0
