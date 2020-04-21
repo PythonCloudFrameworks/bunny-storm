@@ -17,17 +17,20 @@ class TornadoAdapter:
     def __init__(self, rabbitmq_url, configuration, io_loop=None):
         """
         An asynchronous RabbitMQ client, that use tornado to complete invoking.
-        It is an `everything-in-one` RabbitMQ client, including following interfaces:
+        It is an `all-in-one` RabbitMQ client, including following interfaces:
         1. publish - publish message.
-        2. receive - consume messages from a queue. if received properties is not none, it publishes result back
+        2. receive - consume messages from a queue. If received properties is not none, it publishes result back
            to `reply_to` queue.
         3. rpc - publish a message with replay_to properties, wait for answer message and return value.
 
         Architecture:
         This class encapsulate two async connections, one for publishing messages and one for consuming messages.
 
-        :param rabbitmq_url: url for rabbitmq. it can be either '127.0.0.1' ("localhost") or 'amqp://dev:aispeech2018@10.12.7.22:5672/'
-        :param io_loop: io loop. if it is none, using IOLoop.current() instead.
+        :param rabbitmq_url: url for RabbitMQ. It can be either '127.0.0.1' ("localhost") or
+                             'amqp://dev:aispeech2018@10.12.7.22:5672/'
+        :param configuration: RabbitMQ configuration for both receiving and publishing.
+                              It is separated by the keys `receive` and `publish`
+        :param io_loop: io loop. If it is none, using IOLoop.current() instead
         """
         self._parameter = ConnectionParameters("127.0.0.1") if rabbitmq_url in ["localhost", "127.0.0.1"] else URLParameters(rabbitmq_url)
         if io_loop is None:
@@ -57,12 +60,10 @@ class TornadoAdapter:
     @gen.coroutine
     def publish(self, body, properties=None,  mandatory=True):
         """
-        publish message. creating a brand new channel once invoke this method. After publishing, it closes the
-        channel.
+        Publish a message. Creates a brand new channel in the first time, then uses the existing channel onwards.
         :param body: message
         :param properties: properties
-        :param mandatory: whether
-        :return: None
+        :param mandatory: RabbitMQ publish mandatory param
         """
         self.logger.info("Trying to publish message")
         try:
@@ -74,13 +75,12 @@ class TornadoAdapter:
     @gen.coroutine
     def receive(self, handler, no_ack=False):
         """
-        receive message. creating a brand new channel to consume message. Before consuming, it have to declaring
-        exchange and queue. And bind queue to particular exchange with routing key. if received properties is not
-        none, it publishes result back to `reply_to` queue.
-        :param handler: message handler,
-        :type handler def fn(body)
-        :param no_ack: ack
-        :return: None
+        Receive messages. Creates a brand new channel in the first time, then uses the existing channel onwards.
+        The first time it declares exchange and queue, then bind the queue to the particular exchange with routing key.
+        If received properties is not none, it publishes result back to `reply_to` queue.
+        :param handler: message handler
+        :type handler gen.coroutine def fn(logger, body)
+        :param no_ack: whether to ack
         """
         try:
             yield self._receive_channel.consume(self._on_message, handler=handler, no_ack=no_ack)
