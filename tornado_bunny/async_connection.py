@@ -1,7 +1,7 @@
 from pika import URLParameters, ConnectionParameters
 from pika.adapters.tornado_connection import TornadoConnection
 from tornado import gen
-from tornado.queues import Queue
+from tornado.queues import Queue, QueueEmpty
 
 
 class AsyncConnection:
@@ -67,26 +67,27 @@ class AsyncConnection:
         self._current_status = self.CLOSE_STATUS
         self.reconnect()
 
-    def _close_callback(self, connection, reply_code, reply_text):
-        self.logger.error(f"Closing connection: reply code: {reply_code}, reply_text: {reply_text}. System will exist")
+    def _close_callback(self, connection, reason):
+        self.logger.error(f"Closing connection: reason: {reason}. System will exist")
         self._current_status = self.CLOSE_STATUS
         self.reconnect()
 
     def reconnect(self):
         self.should_reconnect = True
+        try:
+            self._connection_queue.get_nowait()
+        except QueueEmpty:
+            pass
         self.stop()
 
     def stop(self):
-        self.logger.info('Stopping')
-        try:
-            self._io_loop.stop()
-        except:
-            pass
-
         if self.should_reconnect:
+            self.logger.info("Restarting")
             self._current_status = self.INIT_STATUS
             self._connect()
-            self._io_loop.start()
+        else:
+            self.logger.info('Stopping')
+            self._io_loop.stop()
 
     def _try_connect(self):
         self.logger.info("Creating connection to RabbitMQ")

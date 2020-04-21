@@ -2,7 +2,7 @@ import functools
 
 from tornado import gen
 from tornado.ioloop import IOLoop
-from tornado.queues import Queue
+from tornado.queues import Queue, QueueEmpty
 from pika import BasicProperties
 
 
@@ -31,6 +31,8 @@ class ChannelConfiguration:
         if prefetch_count is None:
             prefetch_count = 1
         self._prefetch_count = prefetch_count
+        self._should_consume = False
+        self._consume_params = dict()
 
     @gen.coroutine
     def consume(self, on_message_callback, handler=None, no_ack=False):
@@ -38,6 +40,8 @@ class ChannelConfiguration:
                          f"routing key: {self._routing_key}; queue name: {self._queue}")
         channel = yield self._get_channel()
 
+        self._should_consume = True
+        self._consume_params = dict(on_message_callback=on_message_callback, handler=handler, no_ack=no_ack)
         if handler is not None:
             channel.basic_consume(
                 queue=self._queue,
@@ -74,9 +78,16 @@ class ChannelConfiguration:
         self._channel_queue.put(channel)
         return channel
 
+    def _remove_channel_from_queue(self):
+        try:
+            self._channel_queue.get_nowait()
+        except QueueEmpty:
+            pass
+
     @gen.coroutine
     def _create_channel(self):
         self.logger.info("creating channel")
+        connection = yield self._connection.get_connection()
 
         def on_channel_flow(*args, **kwargs):
             pass
@@ -84,17 +95,22 @@ class ChannelConfiguration:
         def on_channel_cancel(frame):
             self.logger.error("Channel was canceled")
             if not self._channel_queue.empty():
-                channel = yield self._channel_queue.get()
+                channel = self._channel
                 if channel and not channel.is_close or channel.is_closing:
                     channel.close()
 
         def on_channel_closed(channel, reason):
             reply_code, reply_txt = reason.args
             self.logger.info(f'Channel {channel} was closed: {reason}')
+
             if reply_code not in [self._NORMAL_CLOSE_CODE, self._USER_CLOSE_CODE]:
                 self.logger.error(f"Channel closed. reply code: {reply_code}; reply text: {reply_txt}. "
                                   f"System will exist")
-                raise Exception(f"Channel was close unexpected. reply code: {reply_code}, reply text: {reply_txt}")
+                if connection and not (connection.is_closed or connection.is_closing):
+                    connection.close()
+
+                self._remove_channel_from_queue()
+                self._io_loop.call_later(1, self._create_channel)
             else:
                 self.logger.info(f"Reply code: {reply_code}, reply text: {reply_txt}")
 
@@ -112,13 +128,11 @@ class ChannelConfiguration:
             self._channel = channel
             self._exchange_declare()
 
-        connection = yield self._connection.get_connection()
         connection.channel(on_open_callback=open_callback)
 
     def _exchange_declare(self):
         self.logger.info(f"Declaring exchange: {self._exchange}")
 
-        # channel = yield self._get_channel()
         self._channel.exchange_declare(
             callback=self._on_exchange_declared,
             exchange=self._exchange,
@@ -133,7 +147,6 @@ class ChannelConfiguration:
     def _queue_declare(self):
         self.logger.info(f"Declaring queue: {self._queue}")
 
-        # channel = yield self._get_channel()
         self._channel.queue_declare(
             callback=self._on_queue_declared, queue=self._queue, durable=self._durable, auto_delete=self._auto_delete)
 
@@ -145,12 +158,12 @@ class ChannelConfiguration:
     def _queue_bind(self):
         self.logger.info(f"Binding queue: {self._queue} to exchange: {self._exchange}")
 
-        # channel = yield self._get_channel()
         self._channel.queue_bind(
             callback=self._on_queue_bind_ok, queue=self._queue, exchange=self._exchange, routing_key=self._routing_key)
 
     def _on_queue_bind_ok(self, unframe):
         self.logger.info(f"bound queue: {self._queue} to exchange: {self._exchange}")
-        # channel = yield self._get_channel()
         self._channel.basic_qos(prefetch_count=self._prefetch_count)
         self._channel_queue.put(self._channel)
+        if self._should_consume:
+            self._io_loop.spawn_callback(self.consume, **self._consume_params)
