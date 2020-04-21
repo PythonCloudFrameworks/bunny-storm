@@ -34,13 +34,12 @@ class TornadoAdapter:
             io_loop = IOLoop.current()
         self._io_loop = io_loop
         self.configuration = configuration
-        self._publish_connection = AsyncConnection(rabbitmq_url, io_loop)
+        self._publish_connection = AsyncConnection(rabbitmq_url, io_loop, self.logger)
         self._publish_channel = ChannelConfiguration(
             self._publish_connection, self.logger, io_loop, **configuration["publish"])
-        self._receive_connection = AsyncConnection(rabbitmq_url, io_loop)
+        self._receive_connection = AsyncConnection(rabbitmq_url, io_loop, self.logger)
         self._receive_channel = ChannelConfiguration(
             self._receive_connection, self.logger, io_loop, **configuration["receive"])
-        # self._rpc_exchange_dict = dict()
         self._rpc_corr_id_dict = dict()
 
     @cached_property
@@ -48,8 +47,11 @@ class TornadoAdapter:
         logger = logging.getLogger(__name__)
         logger.setLevel(logging.DEBUG)
         sh = logging.StreamHandler(sys.stdout)
+        formatter = logging.Formatter('[%(asctime)s] [%(filename)-25s] [%(levelname)-8s] %(message)s')
+        sh.setFormatter(formatter)
         sh.setLevel(logging.DEBUG)
         logger.addHandler(sh)
+        logger.propagate = False
         return logger
 
     @gen.coroutine
@@ -64,7 +66,7 @@ class TornadoAdapter:
         """
         self.logger.info("Trying to publish message")
         try:
-            self._publish_channel.publish(body, properties, mandatory)
+            yield self._publish_channel.publish(body, properties=properties, mandatory=mandatory)
         except Exception as e:
             self.logger.exception(f"Failed to publish message")
             raise Exception("Failed to publish message")
@@ -81,28 +83,25 @@ class TornadoAdapter:
         :return: None
         """
         try:
-            self._receive_channel.consume(self._on_message, handler, no_ack)
+            yield self._receive_channel.consume(self._on_message, handler=handler, no_ack=no_ack)
         except Exception as e:
             self.logger.exception(f"Failed to receive message. {str(e)}")
             raise Exception("Failed to receive message")
 
-    def _on_message(self, unused_channel, basic_deliver, properties, body, exchange, handler=None):
+    def _on_message(self, unused_channel, basic_deliver, properties, body, handler=None):
         self.logger.info("Received a new message")
-        self._io_loop.spawn_callback(self._process_message, unused_channel, basic_deliver, properties, body,
-                                     exchange, handler)
+        self._io_loop.spawn_callback(self._process_message, unused_channel, basic_deliver, properties, body, handler)
 
     @gen.coroutine
-    def _process_message(self, unused_channel, basic_deliver, properties, body, exchange, handler=None):
+    def _process_message(self, unused_channel, basic_deliver, properties, body, handler=None):
         try:
-            result = yield handler(body)
+            result = yield handler(self.logger, body)
             self.logger.info("Message has been processed successfully")
             if properties is not None \
                     and properties.reply_to is not None:
                 self.logger.info(f"Sending result back to "
                                  f"queue: {properties.reply_to}, correlation id: {properties.correlation_id}")
-                yield self.publish(exchange=exchange,
-                                   routing_key=properties.reply_to,
-                                   properties=BasicProperties(correlation_id=properties.correlation_id),
+                yield self.publish(properties=BasicProperties(correlation_id=properties.correlation_id),
                                    body=str(result),
                                    mandatory=False
                                    )
@@ -115,22 +114,21 @@ class TornadoAdapter:
             unused_channel.basic_ack(basic_deliver.delivery_tag)
 
     @gen.coroutine
-    def rpc(self, exchange, routing_key, body, timeout, ttl):
+    def rpc(self, body, timeout, ttl):
         """
         RPC call. It consumes the receiving queue (waiting result).
         It then publishes message to RabbitMQ with properties that has correlation_id and reply_to.
         It will start a coroutine to wait a timeout and raise an `Exception("timeout")` if met.
         If server has been sent result, it returns it asynchronously.
-        :param exchange: exchange name
-        :param routing_key: routing key(e.g. dog.Yellow, cat.big)
         :param body: message
         :param timeout: rpc timeout (seconds)
         :param ttl:  message's time to live in the RabbitMQ queue (seconds)
         :type ttl: int
         :return: result or Exception("timeout")
         """
-        self.logger.info(f"Preparing to rpc call. exchange: {exchange}; routing key: {routing_key}")
-        self._receive_channel.consume(self._rpc_callback_process)
+        self.logger.info(f"Preparing to rpc call. exchange: {self.configuration['publish']['exchange']}; "
+                         f"routing key: {self.configuration['publish']['routing_key']}")
+        yield self._receive_channel.consume(self._rpc_callback_process)
 
         correlation_id = str(uuid.uuid1())
         self.logger.info(f"Starting rpc calling correlation id: {correlation_id}")
@@ -141,7 +139,7 @@ class TornadoAdapter:
         self._rpc_corr_id_dict[correlation_id] = Future()
         properties = BasicProperties(
             correlation_id=correlation_id, reply_to=self.configuration["receive"]["queue"], expiration=str(ttl*1000))
-        yield self.publish(exchange, routing_key, body, properties=properties, mandatory=True)
+        yield self.publish(body, properties=properties, mandatory=True)
         self.logger.info(f"RPC message has been sent. {correlation_id}")
         result = yield self._wait_result(correlation_id, timeout)
         if correlation_id in self._rpc_corr_id_dict:
@@ -153,7 +151,7 @@ class TornadoAdapter:
         self.logger.info(f"RPC get response, correlation id: {properties.correlation_id}")
         if properties.correlation_id in self._rpc_corr_id_dict:
             self.logger.info(f"RPC get response, correlation id: {properties.correlation_id} was found in state dict")
-            self._rpc_corr_id_dict[properties.correlation_id] = body
+            self._rpc_corr_id_dict[properties.correlation_id].set_result(body)
         else:
             self.logger.warning(f"RPC get non exist response. Correlation id: {properties.correlation_id}")
         unused_channel.basic_ack(basic_deliver.delivery_tag)

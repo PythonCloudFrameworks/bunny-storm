@@ -12,8 +12,9 @@ class ChannelConfiguration:
     _NO_ROUTE_CODE = 312
 
     def __init__(self, connection, logger, io_loop=None, exchange=None, exchange_type=None, queue=None,
-                 routing_key=None, durable=None, auto_delete=None, prefetch_count=None):
+                 routing_key=None, durable=False, auto_delete=False, prefetch_count=None):
         self.logger = logger
+        self._channel = None
         self._connection = connection
         if io_loop is None:
             io_loop = IOLoop.current()
@@ -31,6 +32,7 @@ class ChannelConfiguration:
             prefetch_count = 1
         self._prefetch_count = prefetch_count
 
+    @gen.coroutine
     def consume(self, on_message_callback, handler=None, no_ack=False):
         self.logger.info(f"[start consuming] exchange: {self._exchange}; "
                          f"routing key: {self._routing_key}; queue name: {self._queue}")
@@ -39,17 +41,16 @@ class ChannelConfiguration:
         if handler is not None:
             channel.basic_consume(
                 queue=self._queue,
+                auto_ack=no_ack,
                 on_message_callback=functools.partial(
                     on_message_callback,
-                    exchange=self._exchange,
-                    handler=handler,
-                    queue=self._queue,
-                    auto_ack=no_ack
+                    handler=handler
                 )
             )
         else:
-            channel.basic_consume(queue=self._queue, on_message_callback=on_message_callback)
+            channel.basic_consume(queue=self._queue, on_message_callback=on_message_callback, auto_ack=no_ack)
 
+    @gen.coroutine
     def publish(self, body, mandatory=None, properties=None):
         if properties is None:
             properties = BasicProperties(delivery_mode=2)
@@ -59,20 +60,21 @@ class ChannelConfiguration:
         channel.basic_publish(exchange=self._exchange, routing_key=self._routing_key, body=body,
                               mandatory=mandatory, properties=properties)
 
+    @gen.coroutine
     def _get_channel(self):
         if self._channel_queue.empty():
-            channel = self._create_channel()
-            self._channel_queue.put(channel)
+            yield self._create_channel()
 
         channel = yield self._top()
         return channel
 
     @gen.coroutine
     def _top(self):
-        conn = yield self._channel_queue.get()
-        self._channel_queue.put(conn)
-        return conn
+        channel = yield self._channel_queue.get()
+        self._channel_queue.put(channel)
+        return channel
 
+    @gen.coroutine
     def _create_channel(self):
         self.logger.info("creating channel")
 
@@ -107,17 +109,17 @@ class ChannelConfiguration:
             channel.add_on_return_callback(on_channel_return)
             channel.add_on_flow_callback(on_channel_flow)
             channel.add_on_cancel_callback(on_channel_cancel)
-            self._channel_queue.put(channel)
+            self._channel = channel
             self._exchange_declare()
 
-        connection = self._connection.get_connection()
+        connection = yield self._connection.get_connection()
         connection.channel(on_open_callback=open_callback)
 
     def _exchange_declare(self):
         self.logger.info(f"Declaring exchange: {self._exchange}")
 
-        channel = yield self._get_channel()
-        channel.exchange_declare(
+        # channel = yield self._get_channel()
+        self._channel.exchange_declare(
             callback=self._on_exchange_declared,
             exchange=self._exchange,
             exchange_type=self._exchange_type,
@@ -131,8 +133,8 @@ class ChannelConfiguration:
     def _queue_declare(self):
         self.logger.info(f"Declaring queue: {self._queue}")
 
-        channel = yield self._get_channel()
-        channel.queue_declare(
+        # channel = yield self._get_channel()
+        self._channel.queue_declare(
             callback=self._on_queue_declared, queue=self._queue, durable=self._durable, auto_delete=self._auto_delete)
 
     def _on_queue_declared(self, method_frame):
@@ -143,11 +145,12 @@ class ChannelConfiguration:
     def _queue_bind(self):
         self.logger.info(f"Binding queue: {self._queue} to exchange: {self._exchange}")
 
-        channel = yield self._get_channel()
-        channel.queue_bind(
+        # channel = yield self._get_channel()
+        self._channel.queue_bind(
             callback=self._on_queue_bind_ok, queue=self._queue, exchange=self._exchange, routing_key=self._routing_key)
 
     def _on_queue_bind_ok(self, unframe):
         self.logger.info(f"bound queue: {self._queue} to exchange: {self._exchange}")
-        channel = yield self._get_channel()
-        channel.basic_qos(prefetch_count=self._prefetch_count)
+        # channel = yield self._get_channel()
+        self._channel.basic_qos(prefetch_count=self._prefetch_count)
+        self._channel_queue.put(self._channel)
