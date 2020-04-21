@@ -1,6 +1,6 @@
 import sys
 import asyncio
-import logging
+
 import tornado.ioloop
 import tornado.web
 from tornado import gen
