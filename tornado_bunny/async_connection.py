@@ -1,7 +1,3 @@
-import sys
-import logging
-
-from cached_property import cached_property
 from pika import URLParameters, ConnectionParameters
 from pika.adapters.tornado_connection import TornadoConnection
 from tornado import gen
@@ -15,24 +11,20 @@ class AsyncConnection:
     CLOSE_STATUS = "close"
     TIMEOUT_STATUS = 'timeout'
 
-    def __init__(self, rabbitmq_url, io_loop, timeout=10):
+    def __init__(self, rabbitmq_url, io_loop, logger, timeout=10):
         self.should_reconnect = False
 
         self._parameters = ConnectionParameters("127.0.0.1") if rabbitmq_url in ["localhost", "127.0.0.1"] else \
             URLParameters(rabbitmq_url)
         self._io_loop = io_loop
         self._timeout = timeout
+        self._logger = logger
         self._connection_queue = Queue(maxsize=1)
         self._current_status = self.INIT_STATUS
 
-    @cached_property
+    @property
     def logger(self):
-        logger = logging.getLogger(__name__)
-        logger.setLevel(logging.DEBUG)
-        sh = logging.StreamHandler(sys.stdout)
-        sh.setLevel(logging.DEBUG)
-        logger.addHandler(sh)
-        return logger
+        return self._logger
 
     @property
     def status_ok(self):
