@@ -35,7 +35,6 @@ if __name__ == "__main__":
     # Create Fibonacci web app
     app = make_fibonacci_app()
     app.listen(8888)
-    io_loop = tornado.ioloop.IOLoop.instance()
     configuration = dict(
         publish=dict(
             exchange="test_rpc",
@@ -56,6 +55,7 @@ if __name__ == "__main__":
             prefetch_count=1
         )
     )
+    # Using AsyncIO IO Loop
+    io_loop = asyncio.get_event_loop()
     app.rabbit_adapter = TornadoAdapter(rabbitmq_url=RABBIT_URI, configuration=configuration, io_loop=io_loop)
-    logger = app.rabbit_adapter.logger
-    io_loop.start()
+    io_loop.run_forever()

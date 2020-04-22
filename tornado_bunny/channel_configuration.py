@@ -41,7 +41,7 @@ class ChannelConfiguration:
         channel = yield self._get_channel()
 
         self._should_consume = True
-        self._consume_params = dict(on_message_callback=on_message_callback, handler=handler, no_ack=no_ack)
+        self._consume_params = [on_message_callback, handler, no_ack]
         if handler is not None:
             channel.basic_consume(
                 queue=self._queue,
@@ -166,4 +166,4 @@ class ChannelConfiguration:
         self._channel.basic_qos(prefetch_count=self._prefetch_count)
         self._channel_queue.put(self._channel)
         if self._should_consume:
-            self._io_loop.spawn_callback(self.consume, **self._consume_params)
+            self._io_loop.call_later(0.01, self.consume, *self._consume_params)

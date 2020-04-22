@@ -90,7 +90,7 @@ class TornadoAdapter:
 
     def _on_message(self, unused_channel, basic_deliver, properties, body, handler=None):
         self.logger.info("Received a new message")
-        self._io_loop.spawn_callback(self._process_message, unused_channel, basic_deliver, properties, body, handler)
+        self._io_loop.call_later(0.01, self._process_message, unused_channel, basic_deliver, properties, body, handler)
 
     @gen.coroutine
     def _process_message(self, unused_channel, basic_deliver, properties, body, handler=None):

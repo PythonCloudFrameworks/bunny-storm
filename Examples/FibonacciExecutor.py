@@ -28,9 +28,7 @@ if __name__ == "__main__":
     if sys.platform == 'win32':
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
-    # Create Rabbit listener
     print("Creating Rabbit Listener")
-    io_loop = tornado.ioloop.IOLoop.instance()
     configuration = dict(
         receive=dict(
             exchange="test_rpc",
@@ -51,6 +49,8 @@ if __name__ == "__main__":
             prefetch_count=1
         )
     )
+    # Using Tornado IO Loop
+    io_loop = tornado.ioloop.IOLoop.current()
     rabbit_connection = TornadoAdapter(rabbitmq_url=RABBIT_URI, configuration=configuration, io_loop=io_loop)
     rabbit_connection.receive(handler=handle_message)
     io_loop.start()

@@ -1,6 +1,8 @@
 from pika import URLParameters, ConnectionParameters
 from pika.adapters.tornado_connection import TornadoConnection
+from pika.adapters.asyncio_connection import AsyncioConnection
 from tornado import gen
+from tornado.ioloop import IOLoop
 from tornado.queues import Queue, QueueEmpty
 
 
@@ -43,7 +45,7 @@ class AsyncConnection:
         try:
             self._try_connect()
         except Exception as e:
-            self.logger.error(f"Failed to connect to RabbitMQ. {e}")
+            self.logger.exception(f"Failed to connect to RabbitMQ.")
 
     @gen.coroutine
     def _top(self):
@@ -93,8 +95,15 @@ class AsyncConnection:
         self.logger.info("Creating connection to RabbitMQ")
         self._io_loop.call_later(self._timeout, self._on_timeout)
 
-        TornadoConnection(self._parameters,
-                          on_open_callback=self._open_callback,
-                          on_open_error_callback=self._open_error_callback,
-                          on_close_callback=self._close_callback,
-                          custom_ioloop=self._io_loop)
+        if isinstance(self._io_loop, IOLoop):
+            TornadoConnection(self._parameters,
+                              on_open_callback=self._open_callback,
+                              on_open_error_callback=self._open_error_callback,
+                              on_close_callback=self._close_callback,
+                              custom_ioloop=self._io_loop)
+        else:
+            AsyncioConnection(self._parameters,
+                              on_open_callback=self._open_callback,
+                              on_open_error_callback=self._open_error_callback,
+                              on_close_callback=self._close_callback,
+                              custom_ioloop=self._io_loop)
