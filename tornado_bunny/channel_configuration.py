@@ -1,7 +1,6 @@
 import functools
 
 from tornado import gen
-from tornado.ioloop import IOLoop
 from tornado.queues import Queue, QueueEmpty
 from pika import BasicProperties
 
@@ -11,13 +10,11 @@ class ChannelConfiguration:
     _NORMAL_CLOSE_CODE = 200
     _NO_ROUTE_CODE = 312
 
-    def __init__(self, connection, logger, io_loop=None, exchange=None, exchange_type=None, queue=None,
+    def __init__(self, connection, logger, io_loop, exchange=None, exchange_type=None, queue=None,
                  routing_key=None, durable=False, auto_delete=False, prefetch_count=None):
         self.logger = logger
         self._channel = None
         self._connection = connection
-        if io_loop is None:
-            io_loop = IOLoop.current()
         self._io_loop = io_loop
         self._channel_queue = Queue(maxsize=1)
         self._queue = queue if queue is not None else ""
@@ -36,8 +33,7 @@ class ChannelConfiguration:
 
     @gen.coroutine
     def consume(self, on_message_callback, handler=None, no_ack=False):
-        self.logger.info(f"[start consuming] exchange: {self._exchange}; "
-                         f"routing key: {self._routing_key}; queue name: {self._queue}")
+        self.logger.info(f"[start consuming] routing key: {self._routing_key}; queue name: {self._queue}")
         channel = yield self._get_channel()
 
         self._should_consume = True
@@ -126,7 +122,10 @@ class ChannelConfiguration:
             channel.add_on_flow_callback(on_channel_flow)
             channel.add_on_cancel_callback(on_channel_cancel)
             self._channel = channel
-            self._exchange_declare()
+            if self._exchange is not None:
+                self._exchange_declare()
+            else:
+                self._queue_declare()
 
         connection.channel(on_open_callback=open_callback)
 
@@ -153,16 +152,21 @@ class ChannelConfiguration:
     def _on_queue_declared(self, method_frame):
         self.logger.info(f"Declared queue: {method_frame.method.queue}")
         self._queue = method_frame.method.queue
-        self._queue_bind()
+        if self._exchange is not None:
+            self._queue_bind()
+        else:
+            self._on_setup_complete()
 
     def _queue_bind(self):
         self.logger.info(f"Binding queue: {self._queue} to exchange: {self._exchange}")
-
         self._channel.queue_bind(
             callback=self._on_queue_bind_ok, queue=self._queue, exchange=self._exchange, routing_key=self._routing_key)
 
     def _on_queue_bind_ok(self, unframe):
         self.logger.info(f"bound queue: {self._queue} to exchange: {self._exchange}")
+        self._on_setup_complete()
+
+    def _on_setup_complete(self):
         self._channel.basic_qos(prefetch_count=self._prefetch_count)
         self._channel_queue.put(self._channel)
         if self._should_consume:
