@@ -51,13 +51,17 @@ class ChannelConfiguration:
             channel.basic_consume(queue=self._queue, on_message_callback=on_message_callback, auto_ack=no_ack)
 
     @gen.coroutine
-    def publish(self, body, mandatory=None, properties=None):
-        if properties is None:
-            properties = BasicProperties(delivery_mode=2)
-
+    def publish(self, body, mandatory=None, properties=None, reply_to=None):
         channel = yield self._get_channel()
-        self.logger.info(f"Publishing message. exchange: {self._exchange}; routing_key: {self._routing_key}")
-        channel.basic_publish(exchange=self._exchange, routing_key=self._routing_key, body=body,
+        if reply_to is not None:
+            exchange = ""
+            routing_key = reply_to
+        else:
+            exchange = self._exchange
+            routing_key = self._routing_key
+
+        self.logger.info(f"Publishing message. exchange: {exchange}; routing_key: {routing_key}")
+        channel.basic_publish(exchange=exchange, routing_key=routing_key, body=body,
                               mandatory=mandatory, properties=properties)
 
     @gen.coroutine

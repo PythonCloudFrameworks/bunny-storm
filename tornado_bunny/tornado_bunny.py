@@ -32,17 +32,24 @@ class TornadoAdapter:
                               It is separated by the keys `receive` and `publish`
         :param io_loop: io loop. If it is none, using IOLoop.current() instead
         """
-        self._parameter = ConnectionParameters("127.0.0.1") if rabbitmq_url in ["localhost", "127.0.0.1"] else URLParameters(rabbitmq_url)
+        self._parameter = ConnectionParameters("127.0.0.1") \
+            if rabbitmq_url in ["localhost", "127.0.0.1"] else URLParameters(rabbitmq_url)
         if io_loop is None:
             io_loop = IOLoop.current()
         self._io_loop = io_loop
         self.configuration = configuration
         self._publish_connection = AsyncConnection(rabbitmq_url, io_loop, self.logger)
-        self._publish_channel = ChannelConfiguration(
-            self._publish_connection, self.logger, io_loop, **configuration["publish"])
+        self._publish_channels = {
+            publish_configuration["exchange"]: ChannelConfiguration(
+                self._publish_connection, self.logger, io_loop, **publish_configuration)
+            for publish_configuration in configuration["publish"].values()
+        }
         self._receive_connection = AsyncConnection(rabbitmq_url, io_loop, self.logger)
-        self._receive_channel = ChannelConfiguration(
-            self._receive_connection, self.logger, io_loop, **configuration["receive"])
+        self._receive_channels = {
+            receive_configuration["queue"]: ChannelConfiguration(
+                self._receive_connection, self.logger, io_loop, **receive_configuration)
+            for receive_configuration in configuration["receive"].values()
+        }
         self._rpc_corr_id_dict = dict()
 
     @cached_property
@@ -58,32 +65,45 @@ class TornadoAdapter:
         return logger
 
     @gen.coroutine
-    def publish(self, body, properties=None,  mandatory=True):
+    def publish(self, body, exchange, properties=None,  mandatory=True):
         """
         Publish a message. Creates a brand new channel in the first time, then uses the existing channel onwards.
         :param body: message
-        :param properties: properties
+        :param exchange: The exchange to publish to
+        :param properties: RabbitMQ message properties
         :param mandatory: RabbitMQ publish mandatory param
         """
         self.logger.info("Trying to publish message")
+        if properties is None:
+            properties = BasicProperties(delivery_mode=2)
+
+        publish_channel = self._publish_channels.get(exchange)
+        if publish_channel is None:
+            self.logger.error("There is not publisher for the given exchange")
+
         try:
-            yield self._publish_channel.publish(body, properties=properties, mandatory=mandatory)
+            yield publish_channel.publish(body, properties=properties, mandatory=mandatory)
         except Exception as e:
             self.logger.exception(f"Failed to publish message")
             raise Exception("Failed to publish message")
 
     @gen.coroutine
-    def receive(self, handler, no_ack=False):
+    def receive(self, handler, queue, no_ack=False):
         """
         Receive messages. Creates a brand new channel in the first time, then uses the existing channel onwards.
         The first time it declares exchange and queue, then bind the queue to the particular exchange with routing key.
         If received properties is not none, it publishes result back to `reply_to` queue.
         :param handler: message handler
         :type handler gen.coroutine def fn(logger, body)
+        :param queue: The queue to consume from
         :param no_ack: whether to ack
         """
+        receive_channel = self._receive_channels.get(queue)
+        if receive_channel is None:
+            self.logger.error("There is not receiver for the given queue")
+
         try:
-            yield self._receive_channel.consume(self._on_message, handler=handler, no_ack=no_ack)
+            yield receive_channel.consume(self._on_message, handler=handler, no_ack=no_ack)
         except Exception as e:
             self.logger.exception(f"Failed to receive message. {str(e)}")
             raise Exception("Failed to receive message")
@@ -97,14 +117,15 @@ class TornadoAdapter:
         try:
             result = yield handler(self.logger, body)
             self.logger.info("Message has been processed successfully")
-            if properties is not None \
-                    and properties.reply_to is not None:
+            if properties is not None and properties.reply_to is not None:
                 self.logger.info(f"Sending result back to "
                                  f"queue: {properties.reply_to}, correlation id: {properties.correlation_id}")
-                yield self.publish(properties=BasicProperties(correlation_id=properties.correlation_id),
-                                   body=str(result),
-                                   mandatory=False
-                                   )
+                publish_channel = list(self._publish_channels.values())[0]
+                yield publish_channel.publish(properties=BasicProperties(correlation_id=properties.correlation_id),
+                                              body=str(result),
+                                              mandatory=False,
+                                              reply_to=properties.reply_to
+                                              )
                 self.logger.info(f"Sent result back to caller. "
                                  f"Queue: {properties.reply_to}, correlation id: {properties.correlation_id}")
         except Exception as e:
@@ -114,21 +135,26 @@ class TornadoAdapter:
             unused_channel.basic_ack(basic_deliver.delivery_tag)
 
     @gen.coroutine
-    def rpc(self, body, timeout, ttl):
+    def rpc(self, body, receive_queue, publish_exchange, timeout, ttl):
         """
         RPC call. It consumes the receiving queue (waiting result).
         It then publishes message to RabbitMQ with properties that has correlation_id and reply_to.
         It will start a coroutine to wait a timeout and raise an `Exception("timeout")` if met.
         If server has been sent result, it returns it asynchronously.
         :param body: message
+        :param receive_queue: The queue to consume
+        :param publish_exchange: The exchange to publish to
         :param timeout: rpc timeout (seconds)
         :param ttl:  message's time to live in the RabbitMQ queue (seconds)
         :type ttl: int
         :return: result or Exception("timeout")
         """
-        self.logger.info(f"Preparing to rpc call. exchange: {self.configuration['publish']['exchange']}; "
-                         f"routing key: {self.configuration['publish']['routing_key']}")
-        yield self._receive_channel.consume(self._rpc_callback_process)
+        receive_channel = self._receive_channels.get(receive_queue)
+        if receive_channel is None:
+            self.logger.error("There is not receiver for the given queue")
+
+        self.logger.info(f"Preparing to rpc call. Publish exchange: {publish_exchange}; Receive queue: {receive_queue}")
+        yield receive_channel.consume(self._rpc_callback_process)
 
         correlation_id = str(uuid.uuid1())
         self.logger.info(f"Starting rpc calling correlation id: {correlation_id}")
@@ -138,8 +164,8 @@ class TornadoAdapter:
 
         self._rpc_corr_id_dict[correlation_id] = Future()
         properties = BasicProperties(
-            correlation_id=correlation_id, reply_to=self.configuration["receive"]["queue"], expiration=str(ttl*1000))
-        yield self.publish(body, properties=properties, mandatory=True)
+            correlation_id=correlation_id, reply_to=receive_queue, expiration=str(ttl*1000))
+        yield self.publish(body, publish_exchange, properties=properties, mandatory=True)
         self.logger.info(f"RPC message has been sent. {correlation_id}")
         result = yield self._wait_result(correlation_id, timeout)
         if correlation_id in self._rpc_corr_id_dict:
