@@ -7,6 +7,7 @@ import functools
 import asyncio
 import logging
 import sys
+import os
 
 import pytest
 from tornado import gen
@@ -21,8 +22,23 @@ if sys.platform == 'win32':
 
 
 @pytest.fixture(scope="session")
-def rabbitmq_url():
-    return "amqp://test_user:pass123@192.168.56.102:5672/"
+def rabbitmq_host():
+    return os.getenv("RABBITMQ_HOST", "localhost")
+
+
+@pytest.fixture(scope="session")
+def rabbitmq_user():
+    return os.getenv("RABBITMQ_USER", "test_user")
+
+
+@pytest.fixture(scope="session")
+def rabbitmq_password():
+    return os.getenv("RABBITMQ_PASSWORD", "pass123")
+
+
+@pytest.fixture(scope="session")
+def rabbitmq_url(rabbitmq_user, rabbitmq_password, rabbitmq_host):
+    return f"amqp://{rabbitmq_user}:{rabbitmq_password}@{rabbitmq_host}:5672/"
 
 
 @pytest.fixture(scope="session")
