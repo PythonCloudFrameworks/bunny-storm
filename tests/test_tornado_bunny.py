@@ -15,7 +15,7 @@ from tornado.ioloop import IOLoop
 from tornado.queues import Queue
 from pika.adapters.tornado_connection import TornadoConnection
 
-from tornado_bunny import TornadoAdapter, AsyncConnection, ChannelConfiguration
+from tornado_bunny import AsyncConnection, ChannelConfiguration
 
 if sys.platform == 'win32':
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
