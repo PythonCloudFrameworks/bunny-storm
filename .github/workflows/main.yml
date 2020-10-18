@@ -54,6 +54,16 @@ jobs:
         run: |
           pip install .
           pytest tests/ --doctest-modules --junitxml=junit/test-results-${{ matrix.python-version }}.xml --cov=tornado_bunny --cov-report=xml --cov-report=html
+      - name: Update Version
+        run: |
+          VERSION=$(git describe --abbrev=0 --tags)
+          VERSION_BITS=(${VERSION//./ })
+          MINOR=${VERSION_BITS[2]}
+          NEW_MINOR=$((MINOR+1))
+          NEW_TAG="${VERSION_BITS[0]}.${VERSION_BITS[1]}.$NEW_MINOR"
+          echo "Updating $VERSION to $NEW_TAG"
+          git tag $NEW_TAG
+          git push --tags
       - name: Build and Publish Python Package
         env:
           TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
