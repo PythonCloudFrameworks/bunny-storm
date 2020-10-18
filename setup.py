@@ -20,7 +20,7 @@ test_requirements = ['pytest>=3', ]
 setup(
     author="Oded Shimon",
     author_email='audreyr@example.com',
-    vcversioner={'vcs_args': ['git', 'describe', '--long']},
+    vcversioner={'vcs_args': ['git', 'describe', '--tags']},
     python_requires='>=3.7',
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
@@ -46,6 +46,5 @@ setup(
     test_suite='tests',
     tests_require=test_requirements,
     url='https://github.com/odedshimon/tornado_bunny',
-    version='0.1.0',
     zip_safe=False,
 )
