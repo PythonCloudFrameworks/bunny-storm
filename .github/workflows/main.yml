@@ -56,9 +56,8 @@ jobs:
           pytest tests/ --doctest-modules --junitxml=junit/test-results-${{ matrix.python-version }}.xml --cov=tornado_bunny --cov-report=xml --cov-report=html
       - name: Update Version
         run: |
-          ls -l
           git pull --tags
-          VERSION=$(git describe --abbrev=0 --tags)
+          VERSION=$(git describe --abbrev=0 --tags --always)
           VERSION_BITS=(${VERSION//./ })
           MINOR=${VERSION_BITS[2]}
           NEW_MINOR=$((MINOR+1))
