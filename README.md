@@ -14,7 +14,7 @@ Tornado-Bunny connector is all-in-one connector that support number of functiona
 Installation
 ------------
 ```bash
-pip install -U git+https://github.com/odedshimon/tornado-bunny
+pip install -U tornado_bunny
 ```
 
 Examples
