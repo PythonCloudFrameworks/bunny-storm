@@ -13,14 +13,15 @@ with open('HISTORY.rst') as history_file:
 with open("requirements.txt") as requirements_file:
     requirements = requirements_file.read()
 
-setup_requirements = ['pytest-runner', ]
+setup_requirements = ['pytest-runner', 'vcversioner']
 
 test_requirements = ['pytest>=3', ]
 
 setup(
     author="Oded Shimon",
     author_email='audreyr@example.com',
-    python_requires='>=3.5',
+    vcversioner={'vcs_args': ['git', 'describe', '--long']},
+    python_requires='>=3.7',
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',
