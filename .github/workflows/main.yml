@@ -30,6 +30,7 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
+        fetch-depth: 0
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
         with:
@@ -56,8 +57,7 @@ jobs:
           pytest tests/ --doctest-modules --junitxml=junit/test-results-${{ matrix.python-version }}.xml --cov=tornado_bunny --cov-report=xml --cov-report=html
       - name: Update Version
         run: |
-          git pull --tags
-          VERSION=$(git describe --abbrev=0 --tags --always)
+          VERSION=$(git describe --abbrev=0 --tags)
           VERSION_BITS=(${VERSION//./ })
           MINOR=${VERSION_BITS[2]}
           NEW_MINOR=$((MINOR+1))
