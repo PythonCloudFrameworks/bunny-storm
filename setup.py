@@ -20,7 +20,7 @@ test_requirements = ['pytest>=3', ]
 setup(
     author="Oded Shimon",
     author_email='audreyr@example.com',
-    vcversioner={'vcs_args': ['git', 'describe', '--abbrev=0', '--tags']},
+    vcversioner={'vcs_args': ['git', 'describe', '--tags']},
     python_requires='>=3.7',
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
