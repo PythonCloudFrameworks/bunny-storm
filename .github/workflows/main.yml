@@ -10,7 +10,7 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  build:
+  test:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
     strategy:
@@ -56,6 +56,18 @@ jobs:
         run: |
           pip install .
           pytest tests/ --doctest-modules --junitxml=junit/test-results-${{ matrix.python-version }}.xml --cov=tornado_bunny --cov-report=xml --cov-report=html
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+            python-version: 3.8
       - name: Update Version
         run: |
           VERSION=$(git describe --abbrev=0 --tags)
