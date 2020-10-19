@@ -20,7 +20,7 @@ test_requirements = ['pytest>=3', ]
 setup(
     author="Oded Shimon",
     author_email='audreyr@example.com',
-    vcversioner={'vcs_args': ['git', 'describe', '--tags']},
+    vcversioner={'vcs_args': ['git', 'describe', '--tags', '--long']},
     python_requires='>=3.7',
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
@@ -28,8 +28,6 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Natural Language :: English',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
     ],
@@ -45,6 +43,6 @@ setup(
     setup_requires=setup_requirements,
     test_suite='tests',
     tests_require=test_requirements,
-    url='https://github.com/odedshimon/tornado_bunny',
+    url='https://github.com/odedshimon/tornado-bunny',
     zip_safe=False,
 )
