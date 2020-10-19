@@ -3,7 +3,6 @@
 [![PyPI download month](https://img.shields.io/pypi/dm/tornado-bunny.svg)](https://pypi.python.org/pypi/tornado-bunny/)
 [![PyPI pyversions](https://img.shields.io/pypi/pyversions/tornado-bunny.svg)](https://pypi.python.org/pypi/tornado-bunny/)
 [![Ask Me Anything !](https://img.shields.io/badge/Ask%20me-anything-1abc9c.svg)](https://github.com/odedshimon/tornado-bunny/)
-[![GitHub tag](https://img.shields.io/github/v/tag/odedshimon/tornado-bunny.svg?sort=semver)](https://github.com/odedshimon/tornado-bunn/tags/)
 
 Tornado-Bunny
 =============
