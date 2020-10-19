@@ -41,7 +41,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install flake8 pytest pytest-cov
           pip install setuptools wheel twine
-          pip install coveralls
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
       - name: Lint with flake8
         run: |
@@ -57,25 +56,6 @@ jobs:
         run: |
           pip install .
           pytest tests/ --doctest-modules --cov=tornado_bunny
-      - name: Upload Coverage
-        run: coveralls
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COVERALLS_FLAG_NAME: ${{ matrix.python-version }}
-          COVERALLS_PARALLEL: true
-
-  coveralls:
-    name: Finish Coveralls
-    needs: test
-    runs-on: ubuntu-latest
-    container: python:3-slim
-    steps:
-    - name: Finished
-      run: |
-        pip3 install --upgrade coveralls
-        coveralls --finish
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   build:
     needs: test
