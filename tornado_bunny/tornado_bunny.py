@@ -1,20 +1,18 @@
+import asyncio
 import logging
 import uuid
 import sys
+from typing import Union, Coroutine
 
+from aio_pika import Message, DeliveryMode, IncomingMessage
 from cached_property import cached_property
-from pika import BasicProperties
-from pika import URLParameters, ConnectionParameters
-from tornado import gen
-from tornado.ioloop import IOLoop
-from tornado.concurrent import Future
 
-from .async_connection import AsyncConnection
-from .channel_configuration import ChannelConfiguration
+from . import RabbitMQConnectionData, AsyncConnection, ChannelConfiguration
 
 
-class TornadoAdapter:
-    def __init__(self, rabbitmq_url, configuration, io_loop=None):
+class AsyncAdapter:
+    def __init__(self, rabbitmq_connection_data: RabbitMQConnectionData, configuration: dict,
+                 loop: asyncio.AbstractEventLoop = None, virtual_host: str = "/"):
         """
         An asynchronous RabbitMQ client, that use tornado to complete invoking.
         It is an `all-in-one` RabbitMQ client, including following interfaces:
@@ -30,24 +28,21 @@ class TornadoAdapter:
                              'amqp://dev:aispeech2018@10.12.7.22:5672/'
         :param configuration: RabbitMQ configuration for both receiving and publishing.
                               It is separated by the keys `receive` and `publish`
-        :param io_loop: io loop. If it is none, using IOLoop.current() instead
+        :param loop: io loop. If it is none, using asyncio.get_event_loop() instead
         """
-        self._parameter = ConnectionParameters("127.0.0.1") \
-            if rabbitmq_url in ["localhost", "127.0.0.1"] else URLParameters(rabbitmq_url)
-        if io_loop is None:
-            io_loop = IOLoop.current()
-        self._io_loop = io_loop
+        self._rabbitmq_connection_data = rabbitmq_connection_data
+        self._loop = loop or asyncio.get_running_loop()
         self.configuration = configuration
-        self._publish_connection = AsyncConnection(rabbitmq_url, io_loop, self.logger)
+        self._publish_connection = AsyncConnection(rabbitmq_connection_data, self.logger, loop)
         self._publish_channels = {
-            publish_configuration["exchange"]: ChannelConfiguration(
-                self._publish_connection, self.logger, io_loop, **publish_configuration)
+            publish_configuration["exchange_name"]: ChannelConfiguration(
+                self._publish_connection, self.logger, loop, **publish_configuration)
             for publish_configuration in configuration["publish"].values()
         }
-        self._receive_connection = AsyncConnection(rabbitmq_url, io_loop, self.logger)
+        self._receive_connection = AsyncConnection(rabbitmq_connection_data, self.logger, loop)
         self._receive_channels = {
-            receive_configuration["queue"]: ChannelConfiguration(
-                self._receive_connection, self.logger, io_loop, **receive_configuration)
+            receive_configuration["queue_name"]: ChannelConfiguration(
+                self._receive_connection, self.logger, loop, **receive_configuration)
             for receive_configuration in configuration["receive"].values()
         }
         self._rpc_corr_id_dict = dict()
@@ -64,8 +59,8 @@ class TornadoAdapter:
         logger.propagate = False
         return logger
 
-    @gen.coroutine
-    def publish(self, body, exchange, properties=None,  mandatory=True):
+    async def publish(self, body: bytes, exchange: str, properties: dict = None, mandatory: bool = True,
+                      immediate: bool = False, timeout: Union[int, float, None] = None):
         """
         Publish a message. Creates a brand new channel in the first time, then uses the existing channel onwards.
         :param body: message
@@ -75,20 +70,20 @@ class TornadoAdapter:
         """
         self.logger.info("Trying to publish message")
         if properties is None:
-            properties = BasicProperties(delivery_mode=2)
+            properties = dict(delivery_mode=DeliveryMode.PERSISTENT)
 
         publish_channel = self._publish_channels.get(exchange)
         if publish_channel is None:
             self.logger.error("There is not publisher for the given exchange")
 
         try:
-            yield publish_channel.publish(body, properties=properties, mandatory=mandatory)
+            message = Message(body, **properties)
+            await publish_channel.publish(message, mandatory=mandatory, immediate=immediate, timeout=timeout)
         except Exception as e:
             self.logger.exception(f"Failed to publish message")
             raise Exception("Failed to publish message")
 
-    @gen.coroutine
-    def receive(self, handler, queue, no_ack=False):
+    async def receive(self, handler: Coroutine, queue: str, no_ack: bool = False) -> None:
         """
         Receive messages. Creates a brand new channel in the first time, then uses the existing channel onwards.
         The first time it declares exchange and queue, then bind the queue to the particular exchange with routing key.
@@ -103,39 +98,36 @@ class TornadoAdapter:
             self.logger.error("There is not receiver for the given queue")
 
         try:
-            yield receive_channel.consume(self._on_message, handler=handler, no_ack=no_ack)
+            await receive_channel.consume(self._on_message, handler=handler, no_ack=no_ack)
         except Exception as e:
             self.logger.exception(f"Failed to receive message. {str(e)}")
             raise Exception("Failed to receive message")
 
-    def _on_message(self, unused_channel, basic_deliver, properties, body, handler=None):
+    async def _on_message(self, message: IncomingMessage, handler: Coroutine):
         self.logger.info("Received a new message")
-        self._io_loop.call_later(0.01, self._process_message, unused_channel, basic_deliver, properties, body, handler)
+        await self._process_message(message, handler)
 
-    @gen.coroutine
-    def _process_message(self, unused_channel, basic_deliver, properties, body, handler=None):
+    async def _process_message(self, message: IncomingMessage, handler: Coroutine):
         try:
-            result = yield handler(self.logger, body)
+            result = await handler(self.logger, message)
             self.logger.info("Message has been processed successfully")
-            if properties is not None and properties.reply_to is not None:
+            if message.reply_to is not None:
                 self.logger.info(f"Sending result back to "
-                                 f"queue: {properties.reply_to}, correlation id: {properties.correlation_id}")
-                publish_channel = list(self._publish_channels.values())[0]
-                yield publish_channel.publish(properties=BasicProperties(correlation_id=properties.correlation_id),
-                                              body=str(result),
-                                              mandatory=False,
-                                              reply_to=properties.reply_to
-                                              )
+                                 f"queue: {message.reply_to}, correlation id: {message.correlation_id}")
+                publish_channel: ChannelConfiguration = list(self._publish_channels.values())[0]
+                response_message = Message(body=result,
+                                           correlation_id=message.correlation_id,
+                                           reply_to=message.reply_to)
+                await publish_channel.publish(message=response_message, mandatory=False)
                 self.logger.info(f"Sent result back to caller. "
-                                 f"Queue: {properties.reply_to}, correlation id: {properties.correlation_id}")
+                                 f"Queue: {message.reply_to}, correlation id: {message.correlation_id}")
         except Exception as e:
             self.logger.exception("Failed to handle received message.")
             raise Exception("Failed to handle received message.")
         finally:
-            unused_channel.basic_ack(basic_deliver.delivery_tag)
+            message.ack()
 
-    @gen.coroutine
-    def rpc(self, body, receive_queue, publish_exchange, timeout, ttl):
+    async def rpc(self, body: bytes, receive_queue: str, publish_exchange: str, timeout: Union[int, float], ttl: int):
         """
         RPC call. It consumes the receiving queue (waiting result).
         It then publishes message to RabbitMQ with properties that has correlation_id and reply_to.
@@ -154,7 +146,7 @@ class TornadoAdapter:
             self.logger.error("There is not receiver for the given queue")
 
         self.logger.info(f"Preparing to rpc call. Publish exchange: {publish_exchange}; Receive queue: {receive_queue}")
-        yield receive_channel.consume(self._rpc_callback_process)
+        await receive_channel.consume(self._rpc_callback_process)
 
         correlation_id = str(uuid.uuid1())
         self.logger.info(f"Starting rpc calling correlation id: {correlation_id}")
@@ -162,39 +154,41 @@ class TornadoAdapter:
             self.logger.warning(f"Correlation id exists before calling. {correlation_id}")
             del self._rpc_corr_id_dict[correlation_id]
 
-        self._rpc_corr_id_dict[correlation_id] = Future()
-        properties = BasicProperties(
-            correlation_id=correlation_id, reply_to=receive_queue, expiration=str(ttl*1000))
-        yield self.publish(body, publish_exchange, properties=properties, mandatory=True)
+        future = self._loop.create_future()
+        self._rpc_corr_id_dict[correlation_id] = future
+        properties = dict(correlation_id=correlation_id, reply_to=receive_queue, expiration=ttl*1000)
+        await self.publish(body, publish_exchange, properties=properties, mandatory=True)
         self.logger.info(f"RPC message has been sent. {correlation_id}")
-        result = yield self._wait_result(correlation_id, timeout)
+
+        await self._wait_result(correlation_id, timeout)
+        self.logger.info(f"RPC message gets response. {correlation_id}")
+        if future.exception():
+            self.logger.error(f"RPC future returned exception: {future.exception()}")
         if correlation_id in self._rpc_corr_id_dict:
             del self._rpc_corr_id_dict[correlation_id]
-        self.logger.info(f"RPC message gets response. {correlation_id}")
-        return result
+        return future.result()
 
-    def _rpc_callback_process(self, unused_channel, basic_deliver, properties, body):
-        self.logger.info(f"RPC get response, correlation id: {properties.correlation_id}")
-        if properties.correlation_id in self._rpc_corr_id_dict:
-            self.logger.info(f"RPC get response, correlation id: {properties.correlation_id} was found in state dict")
-            self._rpc_corr_id_dict[properties.correlation_id].set_result(body)
+    def _rpc_callback_process(self, message: IncomingMessage):
+        self.logger.info(f"RPC get response, correlation id: {message.correlation_id}")
+        if message.correlation_id in self._rpc_corr_id_dict:
+            self.logger.info(f"RPC get response, correlation id: {message.correlation_id} was found in state dict")
+            self._rpc_corr_id_dict[message.correlation_id].set_result(message.body)
         else:
-            self.logger.warning(f"RPC get non exist response. Correlation id: {properties.correlation_id}")
-        unused_channel.basic_ack(basic_deliver.delivery_tag)
+            self.logger.warning(f"RPC get non exist response. Correlation id: {message.correlation_id}")
+        message.ack()
 
-    def _wait_result(self, corr_id, timeout=None):
+    async def _wait_result(self, corr_id: str, timeout: Union[int, float, None] = None):
         self.logger.info(f"Beginning waiting for result. {corr_id}")
         future = self._rpc_corr_id_dict[corr_id]
-
-        def on_timeout():
+        try:
+            await asyncio.wait_for(future, timeout=timeout)
+        except asyncio.TimeoutError:
             if corr_id in self._rpc_corr_id_dict:
                 self.logger.error(f"RPC timeout. Correlation id: {corr_id}")
                 del self._rpc_corr_id_dict[corr_id]
                 future.set_exception(Exception(f'RPC timeout. Correlation id: {corr_id}'))
 
-        if timeout is not None:
-            self._io_loop.call_later(timeout, on_timeout)
         return future
 
     def status_check(self):
-        return self._receive_connection.status_ok and self._publish_connection.status_ok
+        return self._receive_connection.is_connected() and self._publish_connection.is_connected()

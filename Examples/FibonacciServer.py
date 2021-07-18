@@ -1,58 +1,51 @@
 import sys
 import asyncio
 
-import tornado.ioloop
-import tornado.web
-from tornado import gen
-from tornado_bunny import TornadoAdapter
+from aiohttp import web
+from tornado_bunny import AsyncAdapter, RabbitMQConnectionData
+
+rabbit_adapter = None
 
 
-RABBIT_URI = "amqp://test_user:pass123@192.168.56.102:5672/"
+async def handle(request):
+    await rabbit_adapter.publish(body=b"Second test message", exchange="test_2")
+    num = request.match_info.get("num", "10")
+    rpc_result = await rabbit_adapter.rpc(body=num.encode(),
+                                          receive_queue="fib_server_q",
+                                          publish_exchange="test_rpc",
+                                          timeout=200,
+                                          ttl=200)
+    text = f"The {num} Fibonacci number is {int(rpc_result)}"
+    return web.Response(text=text)
 
 
-class MainHandler(tornado.web.RequestHandler):
-    @gen.coroutine
-    def get(self):
-        self.application.rabbit_adapter.publish(body="Second test message", exchange="test_2")
-        self.write("Fibonacci calculator: Just pass num=<SOME-NUMBER> at URL Parameters | ")
-        num = self.get_argument("num", None, True)
-        self.write("Calculating Fibonacci for " + str(num))
-        # Send RabbitMQ message to the Calculator Microservice and wait for result
-        res = yield self.application.rabbit_adapter.rpc(
-            body=num, receive_queue="fib_server_q", publish_exchange="test_rpc", timeout=200, ttl=200)
-        self.write(" | Result: {}".format(int(res)))
-        self.application.rabbit_adapter.logger.info("Result: {}".format(int(res)))
-
-
-def make_fibonacci_app():
-    return tornado.web.Application([
-        (r"/", MainHandler),
-    ])
+async def make_fibonacci_app():
+    await rabbit_adapter.publish(body=b"First second test message", exchange="test_2")
+    app = web.Application()
+    app.add_routes([web.get("/{num}", handle)])
+    return app
 
 
 if __name__ == "__main__":
     if sys.platform == 'win32':
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
-    # Create Fibonacci web app
-    app = make_fibonacci_app()
-    app.listen(8888)
     configuration = dict(
         publish=dict(
             outgoing_1=dict(
-                exchange="test_rpc",
+                exchange_name="test_rpc",
                 exchange_type="direct",
                 routing_key="fib_calc",
-                queue="fib_calc_q",
+                queue_name="fib_calc_q",
                 durable=True,
                 auto_delete=False,
                 prefetch_count=1
             ),
             outgoing_2=dict(
-                exchange="test_2",
+                exchange_name="test_2",
                 exchange_type="direct",
                 routing_key="test_2",
-                queue="test_2",
+                queue_name="test_2",
                 durable=True,
                 auto_delete=False,
                 prefetch_count=1
@@ -60,10 +53,10 @@ if __name__ == "__main__":
         ),
         receive=dict(
             incoming=dict(
-                exchange="test_server",
+                exchange_name="test_server",
                 exchange_type="direct",
                 routing_key="fib_server",
-                queue="fib_server_q",
+                queue_name="fib_server_q",
                 durable=True,
                 auto_delete=False,
                 prefetch_count=1
@@ -71,7 +64,10 @@ if __name__ == "__main__":
         )
     )
     # Using AsyncIO IO Loop
-    io_loop = asyncio.get_event_loop()
-    app.rabbit_adapter = TornadoAdapter(rabbitmq_url=RABBIT_URI, configuration=configuration, io_loop=io_loop)
-    app.rabbit_adapter.publish(body="First second test message", exchange="test_2")
-    io_loop.run_forever()
+    loop = asyncio.get_event_loop()
+    rabbit_connection_data = RabbitMQConnectionData(username="test_user", password="pass123", virtual_host="vhost")
+    rabbit_adapter = AsyncAdapter(rabbitmq_connection_data=rabbit_connection_data,
+                                  configuration=configuration,
+                                  loop=loop)
+    web.run_app(app=make_fibonacci_app(), port=8888)
+    loop.run_forever()
