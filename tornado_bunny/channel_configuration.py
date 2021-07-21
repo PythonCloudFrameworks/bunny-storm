@@ -89,11 +89,14 @@ class ChannelConfiguration:
         )
 
     async def _get_channel(self) -> RobustChannel:
+        await self._channel_lock.acquire()
         if not self._started:
             await self.start_channel()
 
         if self._channel.is_closed:
             await self._channel.reopen()
+        self._channel_lock.release()
+
         return self._channel
 
     def on_channel_close(self, sender, exc):

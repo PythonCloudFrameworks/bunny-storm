@@ -73,7 +73,7 @@ class AsyncConnection:
                     await asyncio.sleep(self._attempt_backoff)
         raise ConnectionError(f"Failed to connect to RabbitMQ server {self._connection_attempts} times")
 
-    async def _ensure_channel(self) -> RobustChannel:
-        channel = await self._connection.channel()
-        channel.set_qos(prefetch_count=self._prefetch_count)
-        return channel
+    async def close(self) -> None:
+        if not self.is_connected() or self._connection.is_closed:
+            return
+        await self._connection.close()

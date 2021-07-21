@@ -2,7 +2,8 @@ import asyncio
 import logging
 import uuid
 import sys
-from typing import Union, Coroutine
+from types import FunctionType
+from typing import Union
 
 from aio_pika import Message, DeliveryMode, IncomingMessage
 from cached_property import cached_property
@@ -12,7 +13,7 @@ from . import RabbitMQConnectionData, AsyncConnection, ChannelConfiguration
 
 class AsyncAdapter:
     def __init__(self, rabbitmq_connection_data: RabbitMQConnectionData, configuration: dict,
-                 loop: asyncio.AbstractEventLoop = None, virtual_host: str = "/"):
+                 loop: asyncio.AbstractEventLoop = None):
         """
         An asynchronous RabbitMQ client, that use tornado to complete invoking.
         It is an `all-in-one` RabbitMQ client, including following interfaces:
@@ -83,7 +84,7 @@ class AsyncAdapter:
             self.logger.exception(f"Failed to publish message")
             raise Exception("Failed to publish message")
 
-    async def receive(self, handler: Coroutine, queue: str, no_ack: bool = False) -> None:
+    async def receive(self, handler: FunctionType, queue: str, no_ack: bool = False) -> None:
         """
         Receive messages. Creates a brand new channel in the first time, then uses the existing channel onwards.
         The first time it declares exchange and queue, then bind the queue to the particular exchange with routing key.
@@ -103,18 +104,18 @@ class AsyncAdapter:
             self.logger.exception(f"Failed to receive message. {str(e)}")
             raise Exception("Failed to receive message")
 
-    async def _on_message(self, message: IncomingMessage, handler: Coroutine):
+    async def _on_message(self, message: IncomingMessage, handler: FunctionType):
         self.logger.info("Received a new message")
         await self._process_message(message, handler)
 
-    async def _process_message(self, message: IncomingMessage, handler: Coroutine):
+    async def _process_message(self, message: IncomingMessage, handler: FunctionType):
         try:
             result = await handler(self.logger, message)
             self.logger.info("Message has been processed successfully")
             if message.reply_to is not None:
                 self.logger.info(f"Sending result back to "
                                  f"queue: {message.reply_to}, correlation id: {message.correlation_id}")
-                publish_channel: ChannelConfiguration = list(self._publish_channels.values())[0]
+                publish_channel = list(self._publish_channels.values())[0]
                 response_message = Message(body=result,
                                            correlation_id=message.correlation_id,
                                            reply_to=message.reply_to)
