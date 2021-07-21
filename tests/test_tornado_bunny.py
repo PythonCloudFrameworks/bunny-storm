@@ -77,7 +77,7 @@ def configuration() -> dict:
 
 
 def run_coroutine_to_completion(loop: asyncio.AbstractEventLoop, coroutine, *args, **kwargs) -> Any:
-    return loop.run_until_complete(asyncio.gather(coroutine(*args, **kwargs)))
+    return loop.run_until_complete(asyncio.gather(coroutine(*args, **kwargs)))[0]
 
 
 def test_async_connection(rabbitmq_connection_data: RabbitMQConnectionData) -> None:
@@ -85,12 +85,12 @@ def test_async_connection(rabbitmq_connection_data: RabbitMQConnectionData) -> N
     async_connection = AsyncConnection(rabbitmq_connection_data, logging.getLogger(__name__), loop)
 
     # Test first connection to RabbitMQ
-    connection = run_coroutine_to_completion(loop, async_connection.get_connection)[0]
+    connection = run_coroutine_to_completion(loop, async_connection.get_connection)
     assert isinstance(connection, RobustConnection) and async_connection.is_connected()
 
     # Test that closing the connection results in reconnecting automatically without needing to manually reconnect
     run_coroutine_to_completion(loop, async_connection.close)
-    new_connection = run_coroutine_to_completion(loop, async_connection.get_connection)[0]
+    new_connection = run_coroutine_to_completion(loop, async_connection.get_connection)
     assert async_connection.is_connected() and connection != new_connection
 
 
@@ -109,16 +109,16 @@ class TestChannelConfiguration:
             async_connection, async_connection.logger, loop, **configuration["receive"])
 
         # Test channel creation and getter from channel async queue
-        channel = run_coroutine_to_completion(loop, publish_channel._get_channel)[0]
+        channel = run_coroutine_to_completion(loop, publish_channel._get_channel)
         assert not channel.is_closed
 
         # Publish message and check that it uses the same channel
         message = Message(self.MESSAGE_BODY)
         run_coroutine_to_completion(loop, publish_channel.publish, message=message)
-        assert run_coroutine_to_completion(loop, publish_channel._get_channel)[0] == channel
+        assert run_coroutine_to_completion(loop, publish_channel._get_channel) == channel
 
         # Start consuming and wait for message
-        message_body = run_coroutine_to_completion(loop, self.check_consume, loop, receive_channel)[0]
+        message_body = run_coroutine_to_completion(loop, self.check_consume, loop, receive_channel)
         # Stop the loop, in order to stop consuming
         loop.stop()
         assert message_body == self.MESSAGE_BODY
