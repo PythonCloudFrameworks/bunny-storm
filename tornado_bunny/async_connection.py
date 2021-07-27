@@ -24,7 +24,7 @@ class AsyncConnection:
     _connection_lock: asyncio.Lock
 
     def __init__(self, rabbitmq_connection_data: RabbitMQConnectionData, logger: Logger,
-                 loop: asyncio.AbstractEventLoop = None, properties: dict = None,  timeout: int = 10,
+                 loop: asyncio.AbstractEventLoop = None, properties: dict = None,  timeout: Union[int, float] = 10,
                  connection_attempts: int = 5, attempt_backoff: int = 5):
         self._logger = logger
         self._loop = loop or asyncio.get_event_loop()
@@ -36,7 +36,7 @@ class AsyncConnection:
         self._connection_attempts = connection_attempts
         self._attempt_backoff = attempt_backoff
 
-        self._connection_lock = asyncio.Lock(loop=self._loop)
+        self._connection_lock = asyncio.Lock()
         self._connection = None
 
     @property

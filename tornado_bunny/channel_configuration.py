@@ -3,9 +3,14 @@ import functools
 from logging import Logger
 from typing import Union
 
+import aiormq.exceptions
 from aio_pika import RobustChannel, RobustExchange, RobustQueue, Message
 
 from . import AsyncConnection
+
+
+class IntentionalCloseChannelError(Exception):
+    pass
 
 
 class ChannelConfiguration:
@@ -22,12 +27,12 @@ class ChannelConfiguration:
     _auto_delete: bool
     _prefetch_count: int
     _should_consume: bool
-    _consume_params: list
+    _consume_params: tuple
 
     _channel_lock: asyncio.Lock
-    _exchange: RobustExchange
-    _queue: RobustQueue
-    _channel: RobustChannel
+    _exchange: Union[RobustExchange, None]
+    _queue: Union[RobustQueue, None]
+    _channel: Union[RobustChannel, None]
     _started: bool
 
     def __init__(self, connection: AsyncConnection, logger: Logger, loop: asyncio.AbstractEventLoop = None,
@@ -47,9 +52,9 @@ class ChannelConfiguration:
         self._prefetch_count = prefetch_count
 
         self._should_consume = False
-        self._consume_params = list()
+        self._consume_params = (None, None, False)
 
-        self._channel_lock = asyncio.Lock(loop=self._loop)
+        self._channel_lock = asyncio.Lock()
         self._exchange = None
         self._queue = None
         self._channel = None
@@ -64,29 +69,31 @@ class ChannelConfiguration:
         await self._get_channel()
 
         self._should_consume = True
-        self._consume_params = [on_message_callback, handler, no_ack]
-        if handler is not None:
-            await self._queue.consume(
-                callback=functools.partial(on_message_callback, handler=handler),
-                no_ack=no_ack,
-            )
-        else:
-            await self._queue.consume(callback=on_message_callback, no_ack=no_ack)
+        self._consume_params = (on_message_callback, handler, no_ack)
+        callback = on_message_callback if handler is None else functools.partial(on_message_callback, handler=handler)
+
+        try:
+            await self._queue.consume(callback=callback, no_ack=no_ack)
+        except aiormq.exceptions.ChannelNotFoundEntity:
+            self._logger.error(f"Queue {self._queue} was not found, resetting channel")
+            self.on_channel_close(None, None)
 
     async def publish(self, message: Message, mandatory: bool = True, immediate: bool = False,
                       timeout: Union[int, float, None] = None) -> None:
         await self._get_channel()
-        exchange = await self._declare_exchange()
-        routing_key = self._routing_key
-
-        self._logger.info(f"Publishing message. exchange: {exchange}; routing_key: {routing_key}; message: {message}")
-        await exchange.publish(
-            message=message,
-            routing_key=routing_key,
-            mandatory=mandatory,
-            immediate=immediate,
-            timeout=timeout
-        )
+        self._logger.info(f"Publishing message. exchange: {self._exchange}; routing_key: {self._routing_key}; "
+                          f"message: {message}")
+        try:
+            await self._exchange.publish(
+                message=message,
+                routing_key=self._routing_key,
+                mandatory=mandatory,
+                immediate=immediate,
+                timeout=timeout
+            )
+        except aiormq.exceptions.ChannelNotFoundEntity:
+            self._logger.error(f"Exchange {self._exchange} was not found, resetting channel")
+            self.on_channel_close(None, None)
 
     async def _get_channel(self) -> RobustChannel:
         await self._channel_lock.acquire()
@@ -100,13 +107,11 @@ class ChannelConfiguration:
         return self._channel
 
     def on_channel_close(self, sender, exc):
-        self._logger.warning("Channel closed. Exception info: ")
+        self._logger.error("Channel closed. Exception info: ")
         self._logger.error(exc, exc_info=True)
         self._started = False
-        self._loop.create_task(self.start_channel())
-
-    def on_channel_return(self, sender, message):
-        raise Exception(f"Channel returned. Message: {message}")
+        if self._should_consume and not isinstance(exc, IntentionalCloseChannelError):
+            self._loop.create_task(self.consume(*self._consume_params))
 
     async def start_channel(self) -> RobustChannel:
         self._logger.info("Creating channel")
@@ -116,7 +121,6 @@ class ChannelConfiguration:
         connection = await self._connection.get_connection()
         self._channel = await connection.channel()
         self._channel.add_close_callback(self.on_channel_close)
-        self._channel.add_on_return_callback(self.on_channel_return)
         await self._channel.set_qos(prefetch_count=self._prefetch_count)
 
         self._queue = await self._declare_queue()

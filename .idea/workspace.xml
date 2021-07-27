@@ -1,10 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="d4e9e603-9c85-4238-a39c-557c2703d5dd" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+    <list default="true" id="d4e9e603-9c85-4238-a39c-557c2703d5dd" name="Default Changelist" comment="Code cleanup">
+      <change afterPath="$PROJECT_DIR$/tests/conftest.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/test_async_connection.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/test_channel_configuration.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/test_rabbitmq_connection_data.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/test_tornado_bunny.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_async_adapter.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tornado_bunny/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/tornado_bunny/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tornado_bunny/async_connection.py" beforeDir="false" afterPath="$PROJECT_DIR$/tornado_bunny/async_connection.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tornado_bunny/channel_configuration.py" beforeDir="false" afterPath="$PROJECT_DIR$/tornado_bunny/channel_configuration.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tornado_bunny/tornado_bunny.py" beforeDir="false" afterPath="$PROJECT_DIR$/tornado_bunny/async_adapter.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -21,86 +29,119 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="GitSEFilterConfiguration">
+    <file-type-list>
+      <filtered-out-file-type name="LOCAL_BRANCH" />
+      <filtered-out-file-type name="REMOTE_BRANCH" />
+      <filtered-out-file-type name="TAG" />
+      <filtered-out-file-type name="COMMIT_BY_MESSAGE" />
+    </file-type-list>
+  </component>
   <component name="ProjectId" id="1aVcR5MZ3jcWwN7wjpKsuzumU0n" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
-    <option name="showExcludedFiles" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
   <component name="PropertiesComponent">
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/tornado_bunny" />
+    <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
   </component>
-  <component name="RunManager" selected="Python.FibonacciServer">
-    <configuration name="BasicReciver" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/tornado_bunny" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Python tests.pytest for test_channel_configuration.TestChannelConfiguration.test_channel_configuration_consume_publish_close_queue">
+    <configuration name="pytest for test_channel_configuration.TestChannelConfiguration" type="tests" factoryName="py.test" temporary="true" nameIsGenerated="true">
       <module name="tornado_bunny" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/examples" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/tests" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/examples/BasicReciver.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
+      <option name="_new_keywords" value="&quot;&quot;" />
+      <option name="_new_parameters" value="&quot;&quot;" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;test_channel_configuration.TestChannelConfiguration&quot;" />
+      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
-    <configuration name="FibonacciExecutor" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="pytest for test_channel_configuration.TestChannelConfiguration.test_channel_configuration_consume_publish_close_channel" type="tests" factoryName="py.test" temporary="true" nameIsGenerated="true">
       <module name="tornado_bunny" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/examples" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/tests" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/examples/FibonacciExecutor.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
+      <option name="_new_keywords" value="&quot;&quot;" />
+      <option name="_new_parameters" value="&quot;&quot;" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;test_channel_configuration.TestChannelConfiguration.test_channel_configuration_consume_publish_close_channel&quot;" />
+      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
-    <configuration name="FibonacciServer" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="pytest for test_channel_configuration.TestChannelConfiguration.test_channel_configuration_consume_publish_close_queue" type="tests" factoryName="py.test" temporary="true" nameIsGenerated="true">
       <module name="tornado_bunny" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/examples" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/tests" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/examples/FibonacciServer.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
+      <option name="_new_keywords" value="&quot;&quot;" />
+      <option name="_new_parameters" value="&quot;&quot;" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;test_channel_configuration.TestChannelConfiguration.test_channel_configuration_consume_publish_close_queue&quot;" />
+      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
+      <method v="2" />
+    </configuration>
+    <configuration name="pytest for test_channel_configuration.TestChannelConfiguration.test_channel_configuration_consume_publishh" type="tests" factoryName="py.test" temporary="true" nameIsGenerated="true">
+      <module name="tornado_bunny" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/tests" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="_new_keywords" value="&quot;&quot;" />
+      <option name="_new_parameters" value="&quot;&quot;" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;test_channel_configuration.TestChannelConfiguration.test_channel_configuration_consume_publishh&quot;" />
+      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
+      <method v="2" />
+    </configuration>
+    <configuration name="pytest in tests" type="tests" factoryName="py.test" temporary="true" nameIsGenerated="true">
+      <module name="tornado_bunny" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/tests" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="_new_keywords" value="&quot;&quot;" />
+      <option name="_new_parameters" value="&quot;&quot;" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;$PROJECT_DIR$/tests&quot;" />
+      <option name="_new_targetType" value="&quot;PATH&quot;" />
       <method v="2" />
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.FibonacciServer" />
-        <item itemvalue="Python.BasicReciver" />
-        <item itemvalue="Python.FibonacciExecutor" />
+        <item itemvalue="Python tests.pytest for test_channel_configuration.TestChannelConfiguration.test_channel_configuration_consume_publish_close_queue" />
+        <item itemvalue="Python tests.pytest for test_channel_configuration.TestChannelConfiguration.test_channel_configuration_consume_publish_close_channel" />
+        <item itemvalue="Python tests.pytest for test_channel_configuration.TestChannelConfiguration" />
+        <item itemvalue="Python tests.pytest for test_channel_configuration.TestChannelConfiguration.test_channel_configuration_consume_publishh" />
+        <item itemvalue="Python tests.pytest in tests" />
       </list>
     </recent_temporary>
   </component>
@@ -116,6 +157,7 @@
       </list>
     </option>
   </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="SvnConfiguration">
     <configuration />
   </component>
@@ -127,40 +169,117 @@
       <option name="presentableId" value="Default" />
       <updated>1586824189184</updated>
     </task>
+    <task id="LOCAL-00001" summary="First working version for aiopika">
+      <created>1626611503786</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1626611503786</updated>
+    </task>
+    <task id="LOCAL-00002" summary="First working version for aiopika">
+      <created>1626849155354</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1626849155354</updated>
+    </task>
+    <task id="LOCAL-00003" summary="Code cleanup">
+      <created>1626850426431</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1626850426431</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
-  <component name="WindowStateProjectService">
-    <state width="1899" height="463" key="GridCell.Tab.0.bottom" timestamp="1586826433753">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1899" height="463" key="GridCell.Tab.0.bottom/0.0.1920.1040@0.0.1920.1040" timestamp="1586826433753" />
-    <state width="1899" height="463" key="GridCell.Tab.0.center" timestamp="1586826433752">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1899" height="463" key="GridCell.Tab.0.center/0.0.1920.1040@0.0.1920.1040" timestamp="1586826433752" />
-    <state width="1899" height="463" key="GridCell.Tab.0.left" timestamp="1586826433752">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1899" height="463" key="GridCell.Tab.0.left/0.0.1920.1040@0.0.1920.1040" timestamp="1586826433752" />
-    <state width="1899" height="463" key="GridCell.Tab.0.right" timestamp="1586826433752">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1899" height="463" key="GridCell.Tab.0.right/0.0.1920.1040@0.0.1920.1040" timestamp="1586826433752" />
-    <state width="1899" height="463" key="GridCell.Tab.1.bottom" timestamp="1586826433753">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1899" height="463" key="GridCell.Tab.1.bottom/0.0.1920.1040@0.0.1920.1040" timestamp="1586826433753" />
-    <state width="1899" height="463" key="GridCell.Tab.1.center" timestamp="1586826433753">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1899" height="463" key="GridCell.Tab.1.center/0.0.1920.1040@0.0.1920.1040" timestamp="1586826433753" />
-    <state width="1899" height="463" key="GridCell.Tab.1.left" timestamp="1586826433753">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1899" height="463" key="GridCell.Tab.1.left/0.0.1920.1040@0.0.1920.1040" timestamp="1586826433753" />
-    <state width="1899" height="463" key="GridCell.Tab.1.right" timestamp="1586826433753">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1899" height="463" key="GridCell.Tab.1.right/0.0.1920.1040@0.0.1920.1040" timestamp="1586826433753" />
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="oldMeFiltersMigrated" value="true" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="First working version for aiopika" />
+    <MESSAGE value="Code cleanup" />
+    <option name="LAST_COMMIT_MESSAGE" value="Code cleanup" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/tornado_bunny/async_adapter.py</url>
+          <line>39</line>
+          <option name="timeStamp" value="2" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/tornado_bunny/async_adapter.py</url>
+          <line>116</line>
+          <option name="timeStamp" value="12" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/tornado_bunny/async_adapter.py</url>
+          <line>192</line>
+          <option name="timeStamp" value="14" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/tornado_bunny/async_adapter.py</url>
+          <line>176</line>
+          <option name="timeStamp" value="16" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/tests/test_async_adapter.py</url>
+          <line>88</line>
+          <option name="timeStamp" value="19" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/tests/test_async_adapter.py</url>
+          <line>112</line>
+          <option name="timeStamp" value="21" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/tests/test_channel_configuration.py</url>
+          <line>134</line>
+          <option name="timeStamp" value="56" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/tornado_bunny/channel_configuration.py</url>
+          <line>74</line>
+          <option name="timeStamp" value="58" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/tornado_bunny/channel_configuration.py</url>
+          <line>109</line>
+          <option name="timeStamp" value="59" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/tornado_bunny/channel_configuration.py</url>
+          <line>105</line>
+          <option name="timeStamp" value="60" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/tornado_bunny/channel_configuration.py</url>
+          <line>82</line>
+          <option name="timeStamp" value="61" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+    <watches-manager>
+      <configuration name="tests">
+        <watch expression="self._rabbitmq_connection_data.uri()" language="Python" />
+        <watch expression="self._channel" language="Python" />
+      </configuration>
+      <configuration name="PythonConfigurationType">
+        <watch expression="self._channel._queues" language="Python" />
+        <watch expression="self._channel._exchanges" language="Python" />
+        <watch expression="exchange.name" language="Python" />
+      </configuration>
+    </watches-manager>
   </component>
 </project>
