@@ -40,8 +40,8 @@ class TestChannelConfiguration:
         )
 
         # Act
-        channel = run_coroutine_to_completion(channel_config._get_channel())
-        channel_copy = run_coroutine_to_completion(channel_config._get_channel())
+        channel = run_coroutine_to_completion(channel_config.ensure_channel())
+        channel_copy = run_coroutine_to_completion(channel_config.ensure_channel())
 
         # Assert
         assert channel == channel_copy
@@ -63,21 +63,21 @@ class TestChannelConfiguration:
 
     def test_channel_configuration_close_reopen(self, message: Message, publish_channel: ChannelConfiguration):
         # Act
-        run_coroutine_to_completion(publish_channel._get_channel())
+        run_coroutine_to_completion(publish_channel.ensure_channel())
         run_coroutine_to_completion(publish_channel._channel.close())
 
         # Assert
         assert publish_channel._channel.is_closed
 
         # Act
-        run_coroutine_to_completion(publish_channel._get_channel())
+        run_coroutine_to_completion(publish_channel.ensure_channel())
 
         # Assert
         assert not publish_channel._channel.is_closed
 
     def test_channel_configuration_publish(self, message: Message, publish_channel: ChannelConfiguration) -> None:
         # Act
-        run_coroutine_to_completion(publish_channel.start_channel())
+        run_coroutine_to_completion(publish_channel._start_channel())
         message_count_pre = publish_channel._queue.declaration_result.message_count
         run_coroutine_to_completion(publish_channel.publish(message=message))
         run_coroutine_to_completion(publish_channel._queue.declare())

@@ -49,7 +49,7 @@ class AsyncConnection:
             try:
                 self._connection = await self._connect()
             except ConnectionError:
-                self._logger.error("Failed to connect to RabbitMQ, stopping loop.")
+                self.logger.error("Failed to connect to RabbitMQ, stopping loop.")
                 self._loop.stop()
         self._connection_lock.release()
         return self._connection
@@ -67,9 +67,9 @@ class AsyncConnection:
                                                   client_properties=self._properties)
                 return connection
             except (asyncio.exceptions.TimeoutError, ConnectionError) as e:
-                self._logger.error(f"Connection attempt {attempt_num} / {self._connection_attempts} failed")
+                self.logger.error(f"Connection attempt {attempt_num} / {self._connection_attempts} failed")
                 if attempt_num < self._connection_attempts:
-                    self._logger.debug(f"Going to sleep for {self._attempt_backoff} seconds")
+                    self.logger.debug(f"Going to sleep for {self._attempt_backoff} seconds")
                     await asyncio.sleep(self._attempt_backoff)
         raise ConnectionError(f"Failed to connect to RabbitMQ server {self._connection_attempts} times")
 

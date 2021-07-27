@@ -34,17 +34,21 @@ class AsyncAdapter:
         self._rabbitmq_connection_data = rabbitmq_connection_data
         self._loop = loop or asyncio.get_running_loop()
         self.configuration = configuration
-        self._publish_connection = AsyncConnection(rabbitmq_connection_data, self.logger, loop)
+        self._publish_connection = AsyncConnection(rabbitmq_connection_data, self.logger, self._loop)
         self._publish_channels = {
-            publish_configuration["exchange_name"]: ChannelConfiguration(
-                self._publish_connection, self.logger, loop, **publish_configuration)
-            for publish_configuration in configuration["publish"].values()
+            publish_configuration["exchange_name"]: ChannelConfiguration(self._publish_connection,
+                                                                         self.logger,
+                                                                         self._loop,
+                                                                         **publish_configuration)
+            for publish_configuration in self.configuration["publish"].values()
         }
-        self._receive_connection = AsyncConnection(rabbitmq_connection_data, self.logger, loop)
+        self._receive_connection = AsyncConnection(rabbitmq_connection_data, self.logger, self._loop)
         self._receive_channels = {
-            receive_configuration["queue_name"]: ChannelConfiguration(
-                self._receive_connection, self.logger, loop, **receive_configuration)
-            for receive_configuration in configuration["receive"].values()
+            receive_configuration["queue_name"]: ChannelConfiguration(self._receive_connection,
+                                                                      self.logger,
+                                                                      self._loop,
+                                                                      **receive_configuration)
+            for receive_configuration in self.configuration["receive"].values()
         }
         self._rpc_corr_id_dict = dict()
 
@@ -106,9 +110,6 @@ class AsyncAdapter:
 
     async def _on_message(self, message: IncomingMessage, handler: FunctionType):
         self.logger.info("Received a new message")
-        await self._process_message(message, handler)
-
-    async def _process_message(self, message: IncomingMessage, handler: FunctionType):
         try:
             result = await handler(self.logger, message)
             self.logger.info("Message has been processed successfully")

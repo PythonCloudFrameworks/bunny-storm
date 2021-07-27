@@ -2,21 +2,88 @@
 
 """Tests for `tornado_bunny` package."""
 
-
 import asyncio
-import logging
-import sys
-import os
-from typing import Any
 
 import pytest
-from aio_pika import RobustConnection, Message, IncomingMessage
 
-from tornado_bunny import AsyncConnection, ChannelConfiguration, RabbitMQConnectionData
-
-
-def run_coroutine_to_completion(loop: asyncio.AbstractEventLoop, coroutine, *args, **kwargs) -> Any:
-    return loop.run_until_complete(asyncio.gather(coroutine(*args, **kwargs)))[0]
+from tornado_bunny import AsyncAdapter, RabbitMQConnectionData
 
 
+@pytest.fixture(scope="function")
+def rpc_executor_config() -> dict:
+    return dict(
+        receive=dict(
+            incoming_1=dict(
+                exchange_name="executor_ex",
+                exchange_type="direct",
+                routing_key="fib_calc",
+                queue_name="executor_q",
+                durable=True,
+                auto_delete=False,
+                prefetch_count=1
+            ),
+            incoming_2=dict(
+                exchange_name="executor_ex_2",
+                exchange_type="topic",
+                routing_key="#",
+                queue_name="executor_q_2",
+                durable=True,
+                auto_delete=False,
+                prefetch_count=10
+            )
+        ),
+        publish=dict(
+            outgoing=dict(
+                exchange_name="test_server",
+                exchange_type="direct",
+                routing_key="fib_server",
+                queue_name="fib_server_q",
+                durable=True,
+                auto_delete=False,
+                prefetch_count=1
+            )
+        )
+    )
 
+@pytest.fixture(scope="function")
+def rpc_server_config() -> dict:
+    return dict(
+        receive=dict(
+            incoming_1=dict(
+                exchange_name="executor_ex",
+                exchange_type="direct",
+                routing_key="fib_calc",
+                queue_name="executor_q",
+                durable=True,
+                auto_delete=False,
+                prefetch_count=1
+            ),
+            incoming_2=dict(
+                exchange_name="executor_ex_2",
+                exchange_type="topic",
+                routing_key="#",
+                queue_name="executor_q_2",
+                durable=True,
+                auto_delete=False,
+                prefetch_count=10
+            )
+        ),
+        publish=dict(
+            outgoing=dict(
+                exchange_name="test_server",
+                exchange_type="direct",
+                routing_key="fib_server",
+                queue_name="fib_server_q",
+                durable=True,
+                auto_delete=False,
+                prefetch_count=1
+            )
+        )
+    )
+
+
+def test_async_adapter_creation(rabbitmq_connection_data: RabbitMQConnectionData, configuration: dict):
+    # Arrange
+    test_configuration = None
+
+    rabbit_adapter = AsyncAdapter(rabbitmq_connection_data=rabbitmq_connection_data, configuration=configuration)

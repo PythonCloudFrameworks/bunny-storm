@@ -1,0 +1,2 @@
+class IntentionalCloseChannelError(Exception):
+    pass
