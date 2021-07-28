@@ -52,6 +52,10 @@ class ChannelConfiguration:
     def logger(self) -> Logger:
         return self._logger
 
+    @property
+    def loop(self) -> asyncio.AbstractEventLoop:
+        return self._loop
+
     def add_close_callback(self, callback: CloseCallbackType):
         self._channel_close_callbacks.append(callback)
 
@@ -99,6 +103,7 @@ class ChannelConfiguration:
                                exchange_type: str = "direct",
                                durable: bool = None,
                                auto_delete: bool = False) -> RobustExchange:
+        await self.ensure_channel()
         self.logger.info(f"Declaring exchange: {exchange_name}")
         if exchange_name not in self._channel._exchanges:
             exchange = await self._channel.declare_exchange(
@@ -118,6 +123,7 @@ class ChannelConfiguration:
                             routing_key: str = None,
                             durable: bool = None,
                             auto_delete: bool = False) -> RobustQueue:
+        await self.ensure_channel()
         self.logger.info(f"Declaring queue: {queue_name}")
         if queue_name not in self._channel._queues:
             queue = await self._channel.declare_queue(

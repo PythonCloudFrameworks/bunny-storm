@@ -32,7 +32,7 @@ class AsyncAdapter:
         :param loop: io loop. If it is none, using asyncio.get_event_loop() instead
         """
         self._rabbitmq_connection_data = rabbitmq_connection_data
-        self._loop = loop or asyncio.get_running_loop()
+        self._loop = loop or asyncio.get_event_loop()
         self.configuration = configuration
         self._publish_connection = AsyncConnection(rabbitmq_connection_data, self.logger, self._loop)
         self._publish_channels = {

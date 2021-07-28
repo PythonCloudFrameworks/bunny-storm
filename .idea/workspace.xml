@@ -1,18 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="d4e9e603-9c85-4238-a39c-557c2703d5dd" name="Default Changelist" comment="Tests for async_connection and channel_configuration">
-      <change afterPath="$PROJECT_DIR$/tornado_bunny/consumer.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tornado_bunny/intentional_close_channel_error.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tornado_bunny/publisher.py" afterDir="false" />
+    <list default="true" id="d4e9e603-9c85-4238-a39c-557c2703d5dd" name="Default Changelist" comment="Move consumption and production logic from channel_configuration to consumer and publisher">
+      <change afterPath="$PROJECT_DIR$/tests/test_consumer_publisher.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/test_async_adapter.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_async_adapter.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/conftest.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/conftest.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/test_channel_configuration.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_channel_configuration.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tornado_bunny/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/tornado_bunny/__init__.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tornado_bunny/async_adapter.py" beforeDir="false" afterPath="$PROJECT_DIR$/tornado_bunny/async_adapter.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tornado_bunny/async_connection.py" beforeDir="false" afterPath="$PROJECT_DIR$/tornado_bunny/async_connection.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tornado_bunny/channel_configuration.py" beforeDir="false" afterPath="$PROJECT_DIR$/tornado_bunny/channel_configuration.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tornado_bunny/consumer.py" beforeDir="false" afterPath="$PROJECT_DIR$/tornado_bunny/consumer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tornado_bunny/publisher.py" beforeDir="false" afterPath="$PROJECT_DIR$/tornado_bunny/publisher.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -54,23 +52,7 @@
       <recent name="$PROJECT_DIR$/tornado_bunny" />
     </key>
   </component>
-  <component name="RunManager" selected="Python tests.pytest in tests">
-    <configuration name="pytest for test_channel_configuration.TestChannelConfiguration" type="tests" factoryName="py.test" temporary="true" nameIsGenerated="true">
-      <module name="tornado_bunny" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/tests" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="_new_keywords" value="&quot;&quot;" />
-      <option name="_new_parameters" value="&quot;&quot;" />
-      <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;test_channel_configuration.TestChannelConfiguration&quot;" />
-      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
-      <method v="2" />
-    </configuration>
+  <component name="RunManager" selected="Python tests.pytest for test_consumer_publisher.TestConsumerPublisher.test_consume_publish_close_channel">
     <configuration name="pytest for test_channel_configuration.TestChannelConfiguration.test_channel_configuration_consume_publish" type="tests" factoryName="py.test" temporary="true" nameIsGenerated="true">
       <module name="tornado_bunny" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -119,6 +101,22 @@
       <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
+    <configuration name="pytest for test_consumer_publisher.TestConsumerPublisher.test_consume_publish_close_channel" type="tests" factoryName="py.test" temporary="true" nameIsGenerated="true">
+      <module name="tornado_bunny" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/tests" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="_new_keywords" value="&quot;&quot;" />
+      <option name="_new_parameters" value="&quot;&quot;" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;test_consumer_publisher.TestConsumerPublisher.test_consume_publish_close_channel&quot;" />
+      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
+      <method v="2" />
+    </configuration>
     <configuration name="pytest in tests" type="tests" factoryName="py.test" temporary="true" nameIsGenerated="true">
       <module name="tornado_bunny" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -137,11 +135,11 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python tests.pytest for test_consumer_publisher.TestConsumerPublisher.test_consume_publish_close_channel" />
         <item itemvalue="Python tests.pytest in tests" />
         <item itemvalue="Python tests.pytest for test_channel_configuration.TestChannelConfiguration.test_channel_configuration_consume_publish" />
         <item itemvalue="Python tests.pytest for test_channel_configuration.TestChannelConfiguration.test_channel_configuration_consume_publish_close_channel" />
         <item itemvalue="Python tests.pytest for test_channel_configuration.TestChannelConfiguration.test_channel_configuration_consume_publish_close_queue" />
-        <item itemvalue="Python tests.pytest for test_channel_configuration.TestChannelConfiguration" />
       </list>
     </recent_temporary>
   </component>
@@ -197,7 +195,14 @@
       <option name="project" value="LOCAL" />
       <updated>1627368912254</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="Move consumption and production logic from channel_configuration to consumer and publisher">
+      <created>1627393487798</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1627393487798</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -216,7 +221,8 @@
     <MESSAGE value="First working version for aiopika" />
     <MESSAGE value="Code cleanup" />
     <MESSAGE value="Tests for async_connection and channel_configuration" />
-    <option name="LAST_COMMIT_MESSAGE" value="Tests for async_connection and channel_configuration" />
+    <MESSAGE value="Move consumption and production logic from channel_configuration to consumer and publisher" />
+    <option name="LAST_COMMIT_MESSAGE" value="Move consumption and production logic from channel_configuration to consumer and publisher" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -243,36 +249,47 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/tests/test_async_adapter.py</url>
-          <line>88</line>
-          <option name="timeStamp" value="19" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/tests/test_async_adapter.py</url>
           <line>112</line>
           <option name="timeStamp" value="21" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/tests/conftest.py</url>
-          <line>104</line>
-          <option name="timeStamp" value="63" />
+          <url>file://$PROJECT_DIR$/tests/test_consumer_publisher.py</url>
+          <line>77</line>
+          <option name="timeStamp" value="73" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/tests/test_channel_configuration.py</url>
-          <line>108</line>
-          <option name="timeStamp" value="68" />
+          <url>file://$PROJECT_DIR$/tornado_bunny/consumer.py</url>
+          <line>63</line>
+          <option name="timeStamp" value="75" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/tests/test_channel_configuration.py</url>
-          <line>100</line>
-          <option name="timeStamp" value="69" />
+          <url>file://$PROJECT_DIR$/tornado_bunny/consumer.py</url>
+          <line>87</line>
+          <option name="timeStamp" value="76" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/tests/test_consumer_publisher.py</url>
+          <line>79</line>
+          <option name="timeStamp" value="77" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/tests/test_consumer_publisher.py</url>
+          <line>80</line>
+          <option name="timeStamp" value="78" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/tornado_bunny/consumer.py</url>
+          <line>77</line>
+          <option name="timeStamp" value="79" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/tornado_bunny/channel_configuration.py</url>
+          <line>127</line>
+          <option name="timeStamp" value="80" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
     <watches-manager>
-      <configuration name="tests">
-        <watch expression="self._rabbitmq_connection_data.uri()" language="Python" />
-        <watch expression="self._channel" language="Python" />
-      </configuration>
       <configuration name="PythonConfigurationType">
         <watch expression="self._channel._queues" language="Python" />
         <watch expression="self._channel._exchanges" language="Python" />

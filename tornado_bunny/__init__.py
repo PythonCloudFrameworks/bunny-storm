@@ -11,5 +11,7 @@ __all__ = [
     "AsyncConnection",
     "ChannelConfiguration",
     "IntentionalCloseChannelError",
+    "Publisher",
+    "Consumer",
     "AsyncAdapter"
 ]

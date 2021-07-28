@@ -6,8 +6,8 @@ from typing import Any, Coroutine
 
 import pytest
 
-from tornado_bunny import RabbitMQConnectionData, AsyncConnection, ChannelConfiguration
-from tornado_bunny.channel_configuration import IntentionalCloseChannelError
+from tornado_bunny import RabbitMQConnectionData, AsyncConnection, ChannelConfiguration, Consumer, Publisher, \
+    IntentionalCloseChannelError
 
 if sys.platform == 'win32':
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
@@ -56,12 +56,13 @@ def configuration() -> dict:
             exchange_name="test_pub",
             exchange_type="direct",
             routing_key="unit_test",
-            queue_name="unit_test",
             durable=False,
             auto_delete=True,
             prefetch_count=1
         ),
         receive=dict(
+            exchange_name="test_pub",
+            exchange_type="direct",
             routing_key="unit_test",
             queue_name="unit_test",
             durable=False,
@@ -88,30 +89,53 @@ def async_connection(rabbitmq_connection_data: RabbitMQConnectionData, loop: asy
 
 
 @pytest.fixture(scope="function")
-def publish_channel(async_connection: AsyncConnection, loop: asyncio.AbstractEventLoop,
-                    logger: logging.Logger, configuration: dict) -> ChannelConfiguration:
-    channel_config = ChannelConfiguration(async_connection, logger, loop, **configuration["publish"])
+def channel_config(async_connection: AsyncConnection, logger: logging.Logger,
+                   loop: asyncio.AbstractEventLoop) -> ChannelConfiguration:
+    channel_config = ChannelConfiguration(async_connection, logger, loop)
     yield channel_config
     # Teardown
     channel_configuration_teardown(channel_config)
 
 
 @pytest.fixture(scope="function")
-def receive_channel(async_connection: AsyncConnection, loop: asyncio.AbstractEventLoop,
-                    logger: logging.Logger, configuration: dict) -> ChannelConfiguration:
-    channel_config = ChannelConfiguration(async_connection, logger, loop, **configuration["receive"])
-    yield channel_config
+def publisher(async_connection: AsyncConnection, loop: asyncio.AbstractEventLoop, logger: logging.Logger,
+              configuration: dict) -> Publisher:
+    publisher = Publisher(async_connection, logger, **configuration["publish"])
+    yield publisher
     # Teardown
-    channel_configuration_teardown(channel_config)
+    publisher_teardown(publisher)
+
+
+@pytest.fixture(scope="function")
+def consumer(async_connection: AsyncConnection, loop: asyncio.AbstractEventLoop, logger: logging.Logger,
+             configuration: dict) -> ChannelConfiguration:
+    consumer = Consumer(async_connection, logger, loop, **configuration["receive"])
+    yield consumer
+    # Teardown
+    consumer_teardown(consumer)
 
 
 def channel_configuration_teardown(channel_configuration: ChannelConfiguration) -> None:
-    if channel_configuration._queue:
-        run_coroutine_to_completion(channel_configuration._queue.delete(if_unused=False, if_empty=False))
-    if channel_configuration._exchange:
-        run_coroutine_to_completion(channel_configuration._exchange.delete(if_unused=False))
     if channel_configuration._channel:
         run_coroutine_to_completion(channel_configuration._channel.close(exc=IntentionalCloseChannelError("Teardown")))
+        channel_configuration._channel = None
+
+
+def consumer_teardown(consumer: Consumer) -> None:
+    if consumer._queue:
+        run_coroutine_to_completion(consumer._queue.delete(if_unused=False, if_empty=False))
+        consumer._queue = None
+    if consumer._exchange:
+        run_coroutine_to_completion(consumer._exchange.delete(if_unused=False))
+        consumer._exchange = None
+    channel_configuration_teardown(consumer.channel_config)
+
+
+def publisher_teardown(publisher: Publisher) -> None:
+    if publisher._exchange:
+        run_coroutine_to_completion(publisher._exchange.delete(if_unused=False))
+        publisher._exchange = None
+    channel_configuration_teardown(publisher.channel_config)
 
 
 def run_coroutine_to_completion(coroutine: Coroutine) -> Any:
