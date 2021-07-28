@@ -55,7 +55,6 @@ if __name__ == "__main__":
                 exchange_name="test_server",
                 exchange_type="direct",
                 routing_key="fib_server",
-                queue_name="fib_server_q",
                 durable=True,
                 auto_delete=False,
                 prefetch_count=1
@@ -64,7 +63,10 @@ if __name__ == "__main__":
     )
     # Using Tornado IO Loop
     loop = asyncio.get_event_loop()
-    rabbit_connection_data = RabbitMQConnectionData(username="test_user", password="pass123", virtual_host="vhost")
+    rabbit_connection_data = RabbitMQConnectionData(username="test_user",
+                                                    password="pass123",
+                                                    virtual_host="vhost",
+                                                    connection_name="executor")
     rabbit_connection = AsyncAdapter(rabbitmq_connection_data=rabbit_connection_data,
                                      configuration=configuration,
                                      loop=loop)

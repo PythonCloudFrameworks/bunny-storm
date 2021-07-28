@@ -45,11 +45,12 @@ def rpc_executor_config() -> dict:
         )
     )
 
+
 @pytest.fixture(scope="function")
 def rpc_server_config() -> dict:
     return dict(
         receive=dict(
-            incoming_1=dict(
+            incoming=dict(
                 exchange_name="executor_ex",
                 exchange_type="direct",
                 routing_key="fib_calc",
@@ -57,15 +58,6 @@ def rpc_server_config() -> dict:
                 durable=True,
                 auto_delete=False,
                 prefetch_count=1
-            ),
-            incoming_2=dict(
-                exchange_name="executor_ex_2",
-                exchange_type="topic",
-                routing_key="#",
-                queue_name="executor_q_2",
-                durable=True,
-                auto_delete=False,
-                prefetch_count=10
             )
         ),
         publish=dict(
@@ -85,5 +77,4 @@ def rpc_server_config() -> dict:
 def test_async_adapter_creation(rabbitmq_connection_data: RabbitMQConnectionData, configuration: dict):
     # Arrange
     test_configuration = None
-
     rabbit_adapter = AsyncAdapter(rabbitmq_connection_data=rabbitmq_connection_data, configuration=configuration)

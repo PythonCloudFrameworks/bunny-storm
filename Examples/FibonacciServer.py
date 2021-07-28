@@ -36,7 +36,6 @@ if __name__ == "__main__":
                 exchange_name="test_rpc",
                 exchange_type="direct",
                 routing_key="fib_calc",
-                queue_name="fib_calc_q",
                 durable=True,
                 auto_delete=False,
                 prefetch_count=1
@@ -45,7 +44,6 @@ if __name__ == "__main__":
                 exchange_name="test_2",
                 exchange_type="direct",
                 routing_key="test_2",
-                queue_name="test_2",
                 durable=True,
                 auto_delete=False,
                 prefetch_count=1
@@ -65,7 +63,10 @@ if __name__ == "__main__":
     )
     # Using AsyncIO IO Loop
     loop = asyncio.get_event_loop()
-    rabbit_connection_data = RabbitMQConnectionData(username="test_user", password="pass123", virtual_host="vhost")
+    rabbit_connection_data = RabbitMQConnectionData(username="test_user",
+                                                    password="pass123",
+                                                    virtual_host="vhost",
+                                                    connection_name="server")
     rabbit_adapter = AsyncAdapter(rabbitmq_connection_data=rabbit_connection_data,
                                   configuration=configuration,
                                   loop=loop)

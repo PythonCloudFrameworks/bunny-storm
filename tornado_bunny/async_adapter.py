@@ -8,7 +8,7 @@ from typing import Union
 from aio_pika import Message, DeliveryMode, IncomingMessage
 from cached_property import cached_property
 
-from . import RabbitMQConnectionData, AsyncConnection, ChannelConfiguration
+from . import RabbitMQConnectionData, AsyncConnection, Consumer, Publisher
 
 
 class AsyncAdapter:
@@ -34,20 +34,16 @@ class AsyncAdapter:
         self._rabbitmq_connection_data = rabbitmq_connection_data
         self._loop = loop or asyncio.get_event_loop()
         self.configuration = configuration
-        self._publish_connection = AsyncConnection(rabbitmq_connection_data, self.logger, self._loop)
+
+        properties = dict(connection_name="aaaa")
+        self._connection = AsyncConnection(rabbitmq_connection_data, self.logger, self._loop, properties)
+
         self._publish_channels = {
-            publish_configuration["exchange_name"]: ChannelConfiguration(self._publish_connection,
-                                                                         self.logger,
-                                                                         self._loop,
-                                                                         **publish_configuration)
+            publish_configuration["exchange_name"]: self.create_publisher(publish_configuration)
             for publish_configuration in self.configuration["publish"].values()
         }
-        self._receive_connection = AsyncConnection(rabbitmq_connection_data, self.logger, self._loop)
         self._receive_channels = {
-            receive_configuration["queue_name"]: ChannelConfiguration(self._receive_connection,
-                                                                      self.logger,
-                                                                      self._loop,
-                                                                      **receive_configuration)
+            receive_configuration["queue_name"]: self.create_consumer(receive_configuration)
             for receive_configuration in self.configuration["receive"].values()
         }
         self._rpc_corr_id_dict = dict()
@@ -63,6 +59,12 @@ class AsyncAdapter:
         logger.addHandler(sh)
         logger.propagate = False
         return logger
+
+    def create_publisher(self, configuration: dict) -> Publisher:
+        return Publisher(connection=self._connection, logger=self.logger, loop=self._loop, **configuration)
+
+    def create_consumer(self, configuration: dict) -> Consumer:
+        return Consumer(connection=self._connection, logger=self.logger, loop=self._loop, **configuration)
 
     async def publish(self, body: bytes, exchange: str, properties: dict = None, mandatory: bool = True,
                       immediate: bool = False, timeout: Union[int, float, None] = None):
