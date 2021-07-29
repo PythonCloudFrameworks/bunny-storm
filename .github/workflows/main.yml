@@ -56,7 +56,7 @@ jobs:
           RABBITMQ_USER: test_user
           RABBITMQ_PASS: pass123
           RABBITMQ_HOST: rabbitmq
-          RABBITMQ_PORT: ${{ job.services.rabbitmq.ports["5672"] }}
+          RABBITMQ_PORT: "${{ job.services.rabbitmq.ports['5672'] }}"
           RABBITMQ_VIRTUAL_HOST: /
         run: |
           pip install .
