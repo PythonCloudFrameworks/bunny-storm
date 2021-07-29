@@ -21,13 +21,14 @@ jobs:
     # Set up rabbitmq service
     services:
       rabbitmq:
-        image: rabbitmq
+        image: rabbitmq:3-management
         env:
           RABBITMQ_DEFAULT_USER: test_user
           RABBITMQ_DEFAULT_PASS: pass123
           RABBITMQ_DEFAULT_VHOST: /
         ports:
           - 5672:5672
+          - 15672:15672
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
@@ -53,7 +54,8 @@ jobs:
       - name: Wait for RabbitMQ
         uses: nev7n/wait_for_response@v1
         with:
-            url: 'http://localhost:5672/'
+            url: 'http://localhost:15672/'
+            timeout: 120000
       - name: Test with pytest
         env:
           RABBITMQ_USER: test_user
