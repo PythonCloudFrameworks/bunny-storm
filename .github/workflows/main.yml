@@ -53,8 +53,8 @@ jobs:
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
       - name: Test with pytest
         env:
-          RABBITMQ_USER: "test_user"
-          RABBITMQ_PASS: "pass123"
+          RABBITMQ_USER: "guest"
+          RABBITMQ_PASS: "guest"
           RABBITMQ_HOST: "localhost"
           RABBITMQ_PORT: ${{ job.services.rabbitmq.ports['5672'] }}
           RABBITMQ_VIRTUAL_HOST: "/"
