@@ -10,7 +10,6 @@ import pytest
 from aio_pika import IncomingMessage
 
 from tests.conftest import run_coroutine_to_completion, collect_future, consumer_teardown, publisher_teardown
-from tests.test_consumer_publisher import TestConsumerPublisher
 from tornado_bunny import AsyncAdapter, RabbitMQConnectionData, Publisher, Consumer
 
 
@@ -209,4 +208,3 @@ class TestAsyncAdapter:
     async def rpc_executor_message_handler(self, logger: Logger, message: IncomingMessage) -> bytes:
         self._received_rpc_body = message.body
         return message.body + b" " + message.body
-

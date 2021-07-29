@@ -83,7 +83,7 @@ class Consumer:
             auto_delete=self._auto_delete
         )
 
-    async def consume(self, on_message_callback, handler = None, no_ack: bool = False):
+    async def consume(self, on_message_callback, handler=None, no_ack: bool = False):
         self.logger.info(f"[start consuming] routing key: {self._routing_key}; queue name: {self._queue_name}")
         await self._prepare_consume()
         self._should_consume = True

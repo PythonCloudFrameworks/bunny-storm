@@ -63,7 +63,7 @@ class Publisher:
                       immediate: bool = False,
                       timeout: Union[int, float, None] = None) -> None:
         self.logger.info(f"Publishing message. exchange: {self._exchange}; routing_key: {self._routing_key}; "
-                          f"message: {message}")
+                         f"message: {message}")
         await self._prepare_publish()
         publish_exception = None
         try:

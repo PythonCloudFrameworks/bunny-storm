@@ -86,7 +86,7 @@ class AsyncAdapter:
         try:
             message = Message(body, **properties)
             await publisher.publish(message, mandatory=mandatory, immediate=immediate, timeout=timeout)
-        except Exception as e:
+        except Exception:
             self.logger.exception(f"Failed to publish message")
             raise Exception("Failed to publish message")
 
@@ -125,7 +125,7 @@ class AsyncAdapter:
                 await publisher.publish(message=response_message, mandatory=False)
                 self.logger.info(f"Sent result back to caller. "
                                  f"Queue: {message.reply_to}, correlation id: {message.correlation_id}")
-        except Exception as e:
+        except Exception:
             self.logger.exception("Failed to handle received message.")
             raise Exception("Failed to handle received message.")
         finally:

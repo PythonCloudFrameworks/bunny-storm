@@ -2,8 +2,11 @@ name: Tornado Bunny CI/CD
 
 # Controls when the action will run. Triggers the workflow on push or pull request
 # events but only for the master branch
-on: [push]
-
+on:
+  push:
+    branches: [*]
+  pull_request:
+    branches: [master]
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   test:
@@ -50,6 +53,8 @@ jobs:
           RABBITMQ_USER: test_user
           RABBITMQ_PASS: pass123
           RABBITMQ_HOST: localhost
+          RABBITMQ_PORT: 5672
+          RABBITMQ_VIRTUAL_HOST: /
         run: |
           pip install .
           pytest tests/ --doctest-modules --cov=tornado_bunny

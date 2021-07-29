@@ -32,7 +32,7 @@ class TestConsumerPublisher:
         assert message_count_post == message_count_pre + 1
 
         # Teardown
-        queue.delete(if_unused=False, if_empty=False)
+        run_coroutine_to_completion(queue.delete(if_unused=False, if_empty=False))
 
     def test_consume_publish(self,
                              loop: asyncio.AbstractEventLoop,

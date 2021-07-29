@@ -4,13 +4,13 @@
 
 from setuptools import setup, find_packages
 
-with open('README.md') as readme_file:
+with open('README.md', "r") as readme_file:
     readme = readme_file.read()
 
-with open('HISTORY.rst') as history_file:
+with open('HISTORY.rst', "r") as history_file:
     history = history_file.read()
 
-with open("requirements.txt") as requirements_file:
+with open("requirements.txt", "r") as requirements_file:
     requirements = requirements_file.read()
 
 setup_requirements = ['pytest-runner', 'vcversioner']
@@ -31,7 +31,7 @@ setup(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
     ],
-    description="RabbitMQ connector library for Python that is fully integrated with Tornado Framework",
+    description="RabbitMQ connector library for Python that is fully integrated with the aio-pika framework",
     install_requires=requirements,
     license="MIT license",
     long_description=readme + '\n\n' + history,
