@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="d4e9e603-9c85-4238-a39c-557c2703d5dd" name="Default Changelist" comment="Workflow fix for checking rabbitmq health">
+      <change beforePath="$PROJECT_DIR$/.github/workflows/main.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/main.yml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tornado_bunny/async_connection.py" beforeDir="false" afterPath="$PROJECT_DIR$/tornado_bunny/async_connection.py" afterDir="false" />
     </list>
@@ -275,7 +276,14 @@
       <option name="project" value="LOCAL" />
       <updated>1627557606175</updated>
     </task>
-    <option name="localTasksCounter" value="16" />
+    <task id="LOCAL-00016" summary="Workflow fix for checking rabbitmq health">
+      <created>1627558561428</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1627558561428</updated>
+    </task>
+    <option name="localTasksCounter" value="17" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -319,11 +327,6 @@
           <url>file://$PROJECT_DIR$/tornado_bunny/consumer.py</url>
           <line>63</line>
           <option name="timeStamp" value="75" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/tornado_bunny/async_connection.py</url>
-          <line>63</line>
-          <option name="timeStamp" value="86" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/venv/lib/python3.8/site-packages/aio_pika/connection.py</url>
