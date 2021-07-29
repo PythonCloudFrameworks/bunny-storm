@@ -55,7 +55,7 @@ jobs:
       - name: Test with pytest
         env:
           RABBITMQ_USER: "guest"
-          RABBITMQ_PASS: "guest"
+          RABBITMQ_PASSWORD: "guest"
           RABBITMQ_HOST: "localhost"
           RABBITMQ_PORT: ${{ job.services.rabbitmq.ports['5672'] }}
           RABBITMQ_VIRTUAL_HOST: "/"
