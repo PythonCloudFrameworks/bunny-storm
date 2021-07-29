@@ -60,7 +60,7 @@ jobs:
         env:
           RABBITMQ_USER: test_user
           RABBITMQ_PASS: pass123
-          RABBITMQ_HOST: localhost
+          RABBITMQ_HOST: rabbitmq
           RABBITMQ_PORT: 5672
           RABBITMQ_VIRTUAL_HOST: /
         run: |
