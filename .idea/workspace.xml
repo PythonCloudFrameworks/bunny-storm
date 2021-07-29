@@ -1,11 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="d4e9e603-9c85-4238-a39c-557c2703d5dd" name="Default Changelist" comment="Workflow fix">
-      <change beforePath="$PROJECT_DIR$/.github/workflows/main.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/main.yml" afterDir="false" />
+    <list default="true" id="d4e9e603-9c85-4238-a39c-557c2703d5dd" name="Default Changelist" comment="Workflow fix for checking rabbitmq health">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Makefile" beforeDir="false" afterPath="$PROJECT_DIR$/Makefile" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tornado_bunny/async_connection.py" beforeDir="false" afterPath="$PROJECT_DIR$/tornado_bunny/async_connection.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -250,7 +247,35 @@
       <option name="project" value="LOCAL" />
       <updated>1627556539954</updated>
     </task>
-    <option name="localTasksCounter" value="12" />
+    <task id="LOCAL-00012" summary="Workflow fix for checking rabbitmq health">
+      <created>1627556905708</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1627556905708</updated>
+    </task>
+    <task id="LOCAL-00013" summary="Workflow fix for checking rabbitmq health">
+      <created>1627557373230</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1627557373230</updated>
+    </task>
+    <task id="LOCAL-00014" summary="Workflow fix for checking rabbitmq health">
+      <created>1627557383741</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1627557383741</updated>
+    </task>
+    <task id="LOCAL-00015" summary="Workflow fix for checking rabbitmq health">
+      <created>1627557606174</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1627557606175</updated>
+    </task>
+    <option name="localTasksCounter" value="16" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -274,7 +299,8 @@
     <MESSAGE value="Update async adapter to use publisher/consumer&#10;Update rabbitmq connection data to allow specifying connection name" />
     <MESSAGE value="Async adapter tests" />
     <MESSAGE value="Workflow fix" />
-    <option name="LAST_COMMIT_MESSAGE" value="Workflow fix" />
+    <MESSAGE value="Workflow fix for checking rabbitmq health" />
+    <option name="LAST_COMMIT_MESSAGE" value="Workflow fix for checking rabbitmq health" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

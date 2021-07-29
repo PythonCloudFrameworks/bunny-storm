@@ -59,18 +59,21 @@ class AsyncConnection:
 
     async def _connect(self) -> RobustConnection:
         for attempt_num in range(1, self._connection_attempts + 1):
-            self.logger.info(f"Creating connection to RabbitMQ. Attempt: {attempt_num}")
+            uri = self._rabbitmq_connection_data.uri()
+            self.logger.info(f"Creating connection to RabbitMQ, URI: {uri} Attempt: {attempt_num}")
             try:
-                connection = await connect_robust(url=self._rabbitmq_connection_data.uri(),
+                connection = await connect_robust(url=uri,
                                                   loop=self._loop,
                                                   timeout=self._timeout,
                                                   client_properties=self._properties)
                 return connection
-            except (ConnectionError):
+            except (asyncio.TimeoutError, ConnectionError):
                 self.logger.error(f"Connection attempt {attempt_num} / {self._connection_attempts} failed")
                 if attempt_num < self._connection_attempts:
                     self.logger.debug(f"Going to sleep for {self._attempt_backoff} seconds")
                     await asyncio.sleep(self._attempt_backoff)
+            except BaseException:
+                raise ConnectionError("Unexpected exception during connection attempt")
         raise ConnectionError(f"Failed to connect to RabbitMQ server {self._connection_attempts} times")
 
     async def close(self) -> None:
