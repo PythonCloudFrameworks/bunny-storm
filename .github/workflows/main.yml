@@ -21,10 +21,9 @@ jobs:
     # Set up rabbitmq service
     services:
       rabbitmq:
-        image: rabbitmq:3-management
+        image: rabbitmq
         ports:
           - 5672:5672
-          - 15672:15672
         options: >-
           --health-cmd "rabbitmqctl authenticate_user guest guest"
           --health-interval 10s
