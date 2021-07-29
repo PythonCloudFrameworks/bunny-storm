@@ -28,11 +28,11 @@ jobs:
           RABBITMQ_DEFAULT_VHOST: vhost
         ports:
           - 5672/tcp
-        options: >-
-          --health-cmd "rabbitmqctl node_health_check"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+#        options: >-
+#          --health-cmd "rabbitmqctl node_health_check"
+#          --health-interval 10s
+#          --health-timeout 5s
+#          --health-retries 5
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       - name: Echo RABBITMQ_PORT
