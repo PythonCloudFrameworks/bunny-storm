@@ -70,6 +70,8 @@ if __name__ == "__main__":
     rabbit_connection = AsyncAdapter(rabbitmq_connection_data=rabbit_connection_data,
                                      configuration=configuration,
                                      loop=loop)
-    loop.create_task(rabbit_connection.receive(handler=handle_message, queue=configuration["receive"]["incoming_1"]["queue_name"]))
-    loop.create_task(rabbit_connection.receive(handler=handle_test, queue=configuration["receive"]["incoming_2"]["queue_name"]))
+    loop.create_task(rabbit_connection.receive(handler=handle_message,
+                                               queue=configuration["receive"]["incoming_1"]["queue_name"]))
+    loop.create_task(rabbit_connection.receive(handler=handle_test,
+                                               queue=configuration["receive"]["incoming_2"]["queue_name"]))
     loop.run_forever()
