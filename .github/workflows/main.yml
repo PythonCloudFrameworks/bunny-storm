@@ -54,7 +54,7 @@ jobs:
       - name: Wait for RabbitMQ
         uses: nev7n/wait_for_response@v1
         with:
-            url: 'http://localhost:15672/'
+            url: 'http://rabbitmq:15672/'
             timeout: 120000
       - name: Test with pytest
         env:
