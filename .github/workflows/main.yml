@@ -33,7 +33,7 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - name: Check rabbitmq
-        run: curl -o - http://localhost:5671/
+        run: curl -o - http://rabbitmq:5672/
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
