@@ -11,7 +11,7 @@ jobs:
     # The type of runner that the job will run on
     strategy:
       matrix:
-        os: ["ubuntu-latest", "windows-latest", "macos-latest"]
+        os: ["ubuntu-latest", "macos-latest"]
         python-version: [3.7, 3.8, 3.9]
     # Set up rabbitmq service
     services:
