@@ -66,7 +66,7 @@ class AsyncConnection:
                                                   timeout=self._timeout,
                                                   client_properties=self._properties)
                 return connection
-            except (asyncio.exceptions.TimeoutError, ConnectionError):
+            except (ConnectionError):
                 self.logger.error(f"Connection attempt {attempt_num} / {self._connection_attempts} failed")
                 if attempt_num < self._connection_attempts:
                     self.logger.debug(f"Going to sleep for {self._attempt_backoff} seconds")

@@ -48,7 +48,7 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr .pytest_cache
 
 lint: ## check style with flake8
-	flake8 tornado_bunny tests
+	flake8 tornado_bunny tests --max-line-length 120
 
 test: ## run tests quickly with the default Python
 	pytest

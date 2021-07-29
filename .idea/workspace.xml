@@ -1,13 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="d4e9e603-9c85-4238-a39c-557c2703d5dd" name="Default Changelist" comment="Move consumption and production logic from channel_configuration to consumer and publisher, refactor tests">
+    <list default="true" id="d4e9e603-9c85-4238-a39c-557c2703d5dd" name="Default Changelist" comment="Workflow fix">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Examples/FibonacciExecutor.py" beforeDir="false" afterPath="$PROJECT_DIR$/Examples/FibonacciExecutor.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Examples/FibonacciServer.py" beforeDir="false" afterPath="$PROJECT_DIR$/Examples/FibonacciServer.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/test_async_adapter.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_async_adapter.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tornado_bunny/async_adapter.py" beforeDir="false" afterPath="$PROJECT_DIR$/tornado_bunny/async_adapter.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tornado_bunny/rabbitmq_connection_data.py" beforeDir="false" afterPath="$PROJECT_DIR$/tornado_bunny/rabbitmq_connection_data.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tornado_bunny/async_connection.py" beforeDir="false" afterPath="$PROJECT_DIR$/tornado_bunny/async_connection.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -32,6 +29,10 @@
       <filtered-out-file-type name="COMMIT_BY_MESSAGE" />
     </file-type-list>
   </component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/venv/lib/python3.8/site-packages/aio_pika/connection.py" root0="SKIP_INSPECTION" />
+    <setting file="file://$PROJECT_DIR$/venv/lib/python3.8/site-packages/aio_pika/robust_connection.py" root0="SKIP_INSPECTION" />
+  </component>
   <component name="ProjectId" id="1aVcR5MZ3jcWwN7wjpKsuzumU0n" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
@@ -42,6 +43,7 @@
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$/tornado_bunny" />
+    <property name="restartRequiresConfirmation" value="false" />
     <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
   </component>
   <component name="RecentsManager">
@@ -49,7 +51,7 @@
       <recent name="$PROJECT_DIR$/tornado_bunny" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.FibonacciServer">
+  <component name="RunManager" selected="Python tests.pytest in tests">
     <configuration name="FibonacciExecutor" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="tornado_bunny" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -71,28 +73,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="FibonacciServer" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="tornado_bunny" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Examples" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Examples/FibonacciServer.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="pytest for test_channel_configuration.TestChannelConfiguration.test_channel_configuration_consume_publish" type="tests" factoryName="py.test" temporary="true" nameIsGenerated="true">
+    <configuration name="pytest for test_async_adapter.TestAsyncAdapter" type="tests" factoryName="py.test" temporary="true" nameIsGenerated="true">
       <module name="tornado_bunny" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -104,11 +85,11 @@
       <option name="_new_keywords" value="&quot;&quot;" />
       <option name="_new_parameters" value="&quot;&quot;" />
       <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;test_channel_configuration.TestChannelConfiguration.test_channel_configuration_consume_publish&quot;" />
+      <option name="_new_target" value="&quot;test_async_adapter.TestAsyncAdapter&quot;" />
       <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
-    <configuration name="pytest for test_consumer_publisher.TestConsumerPublisher.test_consume_publish_close_channel" type="tests" factoryName="py.test" temporary="true" nameIsGenerated="true">
+    <configuration name="pytest for test_async_adapter.TestAsyncAdapter.test_async_adapter_consume_publish" type="tests" factoryName="py.test" temporary="true" nameIsGenerated="true">
       <module name="tornado_bunny" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -120,7 +101,23 @@
       <option name="_new_keywords" value="&quot;&quot;" />
       <option name="_new_parameters" value="&quot;&quot;" />
       <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;test_consumer_publisher.TestConsumerPublisher.test_consume_publish_close_channel&quot;" />
+      <option name="_new_target" value="&quot;test_async_adapter.TestAsyncAdapter.test_async_adapter_consume_publish&quot;" />
+      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
+      <method v="2" />
+    </configuration>
+    <configuration name="pytest for test_async_adapter.TestAsyncAdapter.test_async_adapter_rpc" type="tests" factoryName="py.test" temporary="true" nameIsGenerated="true">
+      <module name="tornado_bunny" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/tests" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="_new_keywords" value="&quot;&quot;" />
+      <option name="_new_parameters" value="&quot;&quot;" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;test_async_adapter.TestAsyncAdapter.test_async_adapter_rpc&quot;" />
       <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
@@ -142,11 +139,11 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.FibonacciExecutor" />
-        <item itemvalue="Python.FibonacciServer" />
-        <item itemvalue="Python tests.pytest for test_consumer_publisher.TestConsumerPublisher.test_consume_publish_close_channel" />
         <item itemvalue="Python tests.pytest in tests" />
-        <item itemvalue="Python tests.pytest for test_channel_configuration.TestChannelConfiguration.test_channel_configuration_consume_publish" />
+        <item itemvalue="Python tests.pytest for test_async_adapter.TestAsyncAdapter" />
+        <item itemvalue="Python tests.pytest for test_async_adapter.TestAsyncAdapter.test_async_adapter_consume_publish" />
+        <item itemvalue="Python tests.pytest for test_async_adapter.TestAsyncAdapter.test_async_adapter_rpc" />
+        <item itemvalue="Python.FibonacciExecutor" />
       </list>
     </recent_temporary>
   </component>
@@ -216,7 +213,35 @@
       <option name="project" value="LOCAL" />
       <updated>1627465596204</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="Update async adapter to use publisher/consumer&#10;Update rabbitmq connection data to allow specifying connection name">
+      <created>1627469943401</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1627469943401</updated>
+    </task>
+    <task id="LOCAL-00008" summary="Async adapter tests">
+      <created>1627540776403</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1627540776403</updated>
+    </task>
+    <task id="LOCAL-00009" summary="Workflow fix">
+      <created>1627555539517</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1627555539517</updated>
+    </task>
+    <task id="LOCAL-00010" summary="Workflow fix">
+      <created>1627555757715</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1627555757715</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -237,7 +262,10 @@
     <MESSAGE value="Tests for async_connection and channel_configuration" />
     <MESSAGE value="Move consumption and production logic from channel_configuration to consumer and publisher" />
     <MESSAGE value="Move consumption and production logic from channel_configuration to consumer and publisher, refactor tests" />
-    <option name="LAST_COMMIT_MESSAGE" value="Move consumption and production logic from channel_configuration to consumer and publisher, refactor tests" />
+    <MESSAGE value="Update async adapter to use publisher/consumer&#10;Update rabbitmq connection data to allow specifying connection name" />
+    <MESSAGE value="Async adapter tests" />
+    <MESSAGE value="Workflow fix" />
+    <option name="LAST_COMMIT_MESSAGE" value="Workflow fix" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
