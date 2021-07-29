@@ -59,10 +59,9 @@ class AsyncConnection:
 
     async def _connect(self) -> RobustConnection:
         for attempt_num in range(1, self._connection_attempts + 1):
-            uri = self._rabbitmq_connection_data.uri()
-            self.logger.info(f"Creating connection to RabbitMQ, URI: {uri}, Attempt: {attempt_num}")
+            self.logger.info(f"Connecting to RabbitMQ, URI: {self._rabbitmq_connection_data}, Attempt: {attempt_num}")
             try:
-                connection = await connect_robust(url=uri,
+                connection = await connect_robust(url=self._rabbitmq_connection_data.uri(),
                                                   loop=self._loop,
                                                   timeout=self._timeout,
                                                   client_properties=self._properties)
