@@ -4,7 +4,7 @@ from typing import Union
 import pytest
 from aio_pika import Message, IncomingMessage
 
-from tests.conftest import run_coroutine_to_completion
+from tests.conftest import run_coroutine_to_completion, collect_future
 from tornado_bunny import Consumer, Publisher
 
 
@@ -67,7 +67,7 @@ class TestConsumerPublisher:
         self._test_future = loop.create_future()
         await consumer.consume(self.message_handler)
         await publisher.publish(message=message)
-        return await self.collect_future()
+        return await collect_future(self._test_future, timeout=10)
 
     async def check_consume_publish_close_channel(self,
                                                   loop: asyncio.AbstractEventLoop,
@@ -79,14 +79,7 @@ class TestConsumerPublisher:
         await consumer.channel_config.reset_channel(None)
         await asyncio.sleep(0.1)  # Allow consumer to recover
         await publisher.publish(message=message)
-        return await self.collect_future()
+        return await collect_future(self._test_future, timeout=10)
 
     async def message_handler(self, message: IncomingMessage) -> None:
         self._test_future.set_result(message.body)
-
-    async def collect_future(self) -> Union[bytes, None]:
-        try:
-            await asyncio.wait_for(self._test_future, timeout=10)
-            return self._test_future.result()
-        except asyncio.exceptions.TimeoutError:
-            return

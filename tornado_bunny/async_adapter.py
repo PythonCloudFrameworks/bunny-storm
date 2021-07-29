@@ -38,11 +38,11 @@ class AsyncAdapter:
         properties = dict(connection_name="aaaa")
         self._connection = AsyncConnection(rabbitmq_connection_data, self.logger, self._loop, properties)
 
-        self._publish_channels = {
+        self._publishers = {
             publish_configuration["exchange_name"]: self.create_publisher(publish_configuration)
             for publish_configuration in self.configuration["publish"].values()
         }
-        self._receive_channels = {
+        self._consumers = {
             receive_configuration["queue_name"]: self.create_consumer(receive_configuration)
             for receive_configuration in self.configuration["receive"].values()
         }
@@ -79,18 +79,18 @@ class AsyncAdapter:
         if properties is None:
             properties = dict(delivery_mode=DeliveryMode.PERSISTENT)
 
-        publish_channel = self._publish_channels.get(exchange)
-        if publish_channel is None:
+        publisher = self._publishers.get(exchange)
+        if publisher is None:
             self.logger.error("There is not publisher for the given exchange")
 
         try:
             message = Message(body, **properties)
-            await publish_channel.publish(message, mandatory=mandatory, immediate=immediate, timeout=timeout)
+            await publisher.publish(message, mandatory=mandatory, immediate=immediate, timeout=timeout)
         except Exception as e:
             self.logger.exception(f"Failed to publish message")
             raise Exception("Failed to publish message")
 
-    async def receive(self, handler: FunctionType, queue: str, no_ack: bool = False) -> None:
+    async def receive(self, handler, queue: str, no_ack: bool = False) -> None:
         """
         Receive messages. Creates a brand new channel in the first time, then uses the existing channel onwards.
         The first time it declares exchange and queue, then bind the queue to the particular exchange with routing key.
@@ -100,12 +100,12 @@ class AsyncAdapter:
         :param queue: The queue to consume from
         :param no_ack: whether to ack
         """
-        receive_channel = self._receive_channels.get(queue)
-        if receive_channel is None:
-            self.logger.error("There is not receiver for the given queue")
+        consumer = self._consumers.get(queue)
+        if consumer is None:
+            self.logger.error("There is not consumer for the given queue")
 
         try:
-            await receive_channel.consume(self._on_message, handler=handler, no_ack=no_ack)
+            await consumer.consume(self._on_message, handler=handler, no_ack=no_ack)
         except Exception as e:
             self.logger.exception(f"Failed to receive message. {str(e)}")
             raise Exception("Failed to receive message")
@@ -118,11 +118,11 @@ class AsyncAdapter:
             if message.reply_to is not None:
                 self.logger.info(f"Sending result back to "
                                  f"queue: {message.reply_to}, correlation id: {message.correlation_id}")
-                publish_channel = list(self._publish_channels.values())[0]
+                publisher = list(self._publishers.values())[0]
                 response_message = Message(body=result,
                                            correlation_id=message.correlation_id,
                                            reply_to=message.reply_to)
-                await publish_channel.publish(message=response_message, mandatory=False)
+                await publisher.publish(message=response_message, mandatory=False)
                 self.logger.info(f"Sent result back to caller. "
                                  f"Queue: {message.reply_to}, correlation id: {message.correlation_id}")
         except Exception as e:
@@ -145,12 +145,12 @@ class AsyncAdapter:
         :type ttl: int
         :return: result or Exception("timeout")
         """
-        receive_channel = self._receive_channels.get(receive_queue)
-        if receive_channel is None:
+        consumer = self._consumers.get(receive_queue)
+        if consumer is None:
             self.logger.error("There is not receiver for the given queue")
 
         self.logger.info(f"Preparing to rpc call. Publish exchange: {publish_exchange}; Receive queue: {receive_queue}")
-        await receive_channel.consume(self._rpc_callback_process)
+        await consumer.consume(self._rpc_callback_process)
 
         correlation_id = str(uuid.uuid1())
         self.logger.info(f"Starting rpc calling correlation id: {correlation_id}")
@@ -195,4 +195,4 @@ class AsyncAdapter:
         return future
 
     def status_check(self):
-        return self._receive_connection.is_connected() and self._publish_connection.is_connected()
+        return self._connection.is_connected()

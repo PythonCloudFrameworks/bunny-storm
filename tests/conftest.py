@@ -2,7 +2,7 @@ import asyncio
 import logging
 import os
 import sys
-from typing import Any, Coroutine
+from typing import Any, Coroutine, Union
 
 import pytest
 
@@ -45,7 +45,8 @@ def rabbitmq_connection_data(rabbitmq_user: str, rabbitmq_password: str, rabbitm
                                              password=rabbitmq_password,
                                              host=rabbitmq_host,
                                              port=rabbitmq_port,
-                                             virtual_host=rabbitmq_virtual_host)
+                                             virtual_host=rabbitmq_virtual_host,
+                                             connection_name="test_runner")
     return connection_data
 
 
@@ -141,3 +142,11 @@ def publisher_teardown(publisher: Publisher) -> None:
 def run_coroutine_to_completion(coroutine: Coroutine) -> Any:
     loop = asyncio.get_event_loop()
     return loop.run_until_complete(asyncio.gather(coroutine))[0]
+
+
+async def collect_future(future: asyncio.Future, timeout: Union[int, float]) -> Union[bytes, None]:
+    try:
+        await asyncio.wait_for(future, timeout=timeout)
+        return future.result()
+    except asyncio.exceptions.TimeoutError:
+        return
