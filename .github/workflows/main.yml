@@ -60,6 +60,5 @@ jobs:
           RABBITMQ_PORT: ${{ job.services.rabbitmq.ports['5672'] }}
           RABBITMQ_VIRTUAL_HOST: "/"
         run: |
-          pip install . pika
-          python check_rabbit.py
-#          pytest tests/ --doctest-modules --cov=tornado_bunny
+          pip install .
+          pytest tests/ --doctest-modules --cov=tornado_bunny
