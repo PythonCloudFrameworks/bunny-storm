@@ -24,8 +24,6 @@ jobs:
         image: rabbitmq
         ports:
           - 5672:5672
-        env:
-          RABBITMQ_DEFAULT_VHOST: "/"
         options: >-
           --health-cmd "rabbitmqctl authenticate_user guest guest"
           --health-interval 10s
