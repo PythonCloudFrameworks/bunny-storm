@@ -7,7 +7,6 @@ from types import FunctionType
 from typing import Union
 
 from aio_pika import Message, DeliveryMode, IncomingMessage
-from cached_property import cached_property
 
 from . import RabbitMQConnectionData, AsyncConnection, Consumer, Publisher
 
