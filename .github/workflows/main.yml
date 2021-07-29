@@ -34,7 +34,7 @@ jobs:
       - name: Echo RABBITMQ_PORT
         run: echo "$RABBITMQ_PORT"
         env:
-          RABBITMQ_PORT: ${{ job.services.rabbitmq.ports[5672] }}
+          RABBITMQ_PORT: ${{ job.services.rabbitmq.ports['5672'] }}
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
 #      - uses: actions/checkout@v2
 #        with:
