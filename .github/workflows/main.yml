@@ -27,7 +27,6 @@ jobs:
         env:
           RABBITMQ_DEFAULT_USER: "test_user"
           RABBITMQ_DEFAULT_PASS: "pass123"
-          RABBITMQ_DEFAULT_VHOST: "/"
         options: >-
           --health-cmd "rabbitmqctl authenticate_user test_user pass123"
           --health-interval 10s
