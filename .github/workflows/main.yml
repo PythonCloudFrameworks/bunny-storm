@@ -24,6 +24,10 @@ jobs:
         image: rabbitmq
         ports:
           - 5672:5672
+        env:
+          RABBITMQ_DEFAULT_USER: "test_user"
+          RABBITMQ_DEFAULT_PASS: "pass123"
+          RABBITMQ_DEFAULT_VHOST: "/"
         options: >-
           --health-cmd "rabbitmqctl node_health_check"
           --health-interval 10s
@@ -32,8 +36,6 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - name: Check rabbitmq
-        run: curl -o - http://rabbitmq:5672/
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
@@ -55,9 +57,9 @@ jobs:
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
       - name: Test with pytest
         env:
-          RABBITMQ_USER: guest
-          RABBITMQ_PASS: guest
-          RABBITMQ_HOST: localhost
+          RABBITMQ_USER: "test_user"
+          RABBITMQ_PASS: "pass123"
+          RABBITMQ_HOST: "localhost"
           RABBITMQ_PORT: ${{ job.services.rabbitmq.ports['5672'] }}
           RABBITMQ_VIRTUAL_HOST: "/"
         run: |
