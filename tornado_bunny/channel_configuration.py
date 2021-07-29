@@ -9,6 +9,11 @@ from . import AsyncConnection
 
 
 class ChannelConfiguration:
+    """
+    Responsible for the management of a single channel in a given connection.
+    Exposes APIs for the declaration of exchanges and queues.
+    Automatically recovers from being closed.
+    """
     _logger: Logger
 
     _connection: AsyncConnection
@@ -28,6 +33,15 @@ class ChannelConfiguration:
     def __init__(self, connection: AsyncConnection, logger: Logger, loop: asyncio.AbstractEventLoop = None,
                  prefetch_count: int = 1, channel_number: int = None, publisher_confirms: bool = True,
                  on_return_raises: bool = False):
+        """
+        :param connection: AsyncConnection instance to create a channel with
+        :param logger: Logger
+        :param loop: Event loop
+        :param prefetch_count: Prefetch count of channel
+        :param channel_number: Index of channel (set automatically if None)
+        :param publisher_confirms: Whether or not to use publisher confirms
+        :param on_return_raises: Whether or not to raise an error in case publishing a message causes a return
+        """
         self._logger = logger
 
         self._connection = connection
@@ -46,20 +60,41 @@ class ChannelConfiguration:
 
     @property
     def started(self) -> bool:
+        """
+        Whether or not the channel has been started
+        :return: self._started
+        """
         return self._started
 
     @property
     def logger(self) -> Logger:
+        """
+        :return: self._logger
+        """
         return self._logger
 
     @property
     def loop(self) -> asyncio.AbstractEventLoop:
+        """
+        :return: self._loop
+        """
         return self._loop
 
-    def add_close_callback(self, callback: CloseCallbackType):
+    def add_close_callback(self, callback: CloseCallbackType) -> None:
+        """
+        Adds a callback which will be called in case the channel is closed. Callbacks are called sequentially.
+        :param callback: Callback to add
+        """
         self._channel_close_callbacks.append(callback)
 
     async def ensure_channel(self) -> RobustChannel:
+        """
+        Ensures that the channel has been started and is open, then returns it.
+        If the channel has not been started, starts the channel.
+        If the channel is closed, reopens it.
+        Uses a Lock to ensure that no race conditions can occur.
+        :return: Robust channel held by this instance
+        """
         await self._channel_lock.acquire()
         if not self._started:
             await self._start_channel()
@@ -71,12 +106,24 @@ class ChannelConfiguration:
         return self._channel
 
     async def reset_channel(self, exc: BaseException) -> None:
+        """
+        Resets the channel.
+        If the channel is already closed, calls the callback for the channel being closed.
+        If the channel is open, closes the channel.
+        :param exc: Exception to pass for the channel's closing
+        """
         if self._channel.is_closed:
             self._on_channel_close(None, exc)
         else:
             await self._channel.close(exc)
 
     def _on_channel_close(self, sender: Sender, exc: BaseException) -> None:
+        """
+        Handles the channel getting closed.
+        Prints indicative logs, sets self._started to False, and calls all channel close callbacks.
+        :param sender: Closer
+        :param exc: Exception which caused the closing
+        """
         self.logger.error("Channel closed. Exception info: ")
         self.logger.error(exc, exc_info=True)
         self._started = False
@@ -84,10 +131,11 @@ class ChannelConfiguration:
             callback(sender, exc)
 
     async def _start_channel(self) -> RobustChannel:
+        """
+        Creates a new channel using the AsyncConnection given to this instance, and sets the relevant parameters.
+        :return: Channel created
+        """
         self.logger.info("Creating channel")
-        if self._started:
-            return self._channel
-
         connection = await self._connection.get_connection()
         self._channel = await connection.channel(channel_number=self._channel_number,
                                                  publisher_confirms=self._publisher_confirms,
@@ -103,6 +151,15 @@ class ChannelConfiguration:
                                exchange_type: str = "direct",
                                durable: bool = None,
                                auto_delete: bool = False) -> RobustExchange:
+        """
+        Declares an exchange with the given parameters.
+        If an exchange with the given name already exists in the channel, returns it instead of creating a new one.
+        :param exchange_name: Exchange name
+        :param exchange_type: Exchange type
+        :param durable: Exchange durability
+        :param auto_delete: Whether or not the exchange is auto deleted
+        :return: Exchange which was declared or gotten
+        """
         await self.ensure_channel()
         self.logger.info(f"Declaring exchange: {exchange_name}")
         if exchange_name not in self._channel._exchanges:
@@ -123,6 +180,17 @@ class ChannelConfiguration:
                             routing_key: str = None,
                             durable: bool = None,
                             auto_delete: bool = False) -> RobustQueue:
+        """
+        Declares a queue with the given parameters.
+        If a queue with the given name already exists in the channel, gets it instead of creating a new one.
+        If an exchange and valid routing key are passed, the queue is bound to the exchange with the routing key.
+        :param queue_name: Queue name
+        :param exchange: Exchange to bind queue to
+        :param routing_key: Routing key to bind queue with
+        :param durable: Queue durability
+        :param auto_delete: Whether or not the queue auto deletes
+        :return: Declared or gotten queue
+        """
         await self.ensure_channel()
         self.logger.info(f"Declaring queue: {queue_name}")
         if queue_name not in self._channel._queues:
