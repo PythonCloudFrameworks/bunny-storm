@@ -25,8 +25,7 @@ jobs:
         ports:
           - 5672:5672
         env:
-          RABBITMQ_DEFAULT_USER: "admin"
-          RABBITMQ_DEFAULT_PASS: "admin"
+          RABBITMQ_DEFAULT_VHOST: "/"
         options: >-
           --health-cmd "rabbitmqctl authenticate_user test_user pass123"
           --health-interval 10s
