@@ -21,9 +21,10 @@ jobs:
     # Set up rabbitmq service
     services:
       rabbitmq:
-        image: rabbitmq
+        image: rabbitmq:3-management
         ports:
           - 5672:5672
+          - 15672:15672
         options: >-
           --health-cmd "rabbitmqctl authenticate_user guest guest"
           --health-interval 10s
@@ -60,4 +61,5 @@ jobs:
           RABBITMQ_VIRTUAL_HOST: "/"
         run: |
           pip install .
-          pytest tests/ --doctest-modules --cov=tornado_bunny
+          curl http://localhost:15672/
+#          pytest tests/ --doctest-modules --cov=tornado_bunny
