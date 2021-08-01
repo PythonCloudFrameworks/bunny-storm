@@ -120,14 +120,14 @@ class AsyncAdapter:
 
         publisher = self._publishers.get(exchange)
         if publisher is None:
-            self.logger.error("There is not publisher for the given exchange")
+            raise KeyError(f"There is no publisher for the given exchange: {exchange}")
 
         try:
             message = Message(body, **properties)
             await publisher.publish(message, mandatory=mandatory, immediate=immediate, timeout=timeout)
         except Exception:
             self.logger.exception(f"Failed to publish message")
-            raise Exception("Failed to publish message")
+            raise
 
     async def receive(self, handler, queue: str, no_ack: bool = False) -> None:
         """
@@ -140,13 +140,13 @@ class AsyncAdapter:
         """
         consumer = self._consumers.get(queue)
         if consumer is None:
-            self.logger.error("There is not consumer for the given queue")
+            raise KeyError(f"There is no consumer for the given queue: {queue}")
 
         try:
             await consumer.consume(self._on_message, handler=handler, no_ack=no_ack)
-        except Exception as e:
-            self.logger.exception(f"Failed to receive message. {str(e)}")
-            raise Exception("Failed to receive message")
+        except Exception:
+            self.logger.exception(f"Failed to receive message.")
+            raise
 
     async def _on_message(self, message: IncomingMessage, handler: FunctionType) -> None:
         """
@@ -171,7 +171,7 @@ class AsyncAdapter:
                                  f"Queue: {message.reply_to}, correlation id: {message.correlation_id}")
         except Exception:
             self.logger.exception("Failed to handle received message.")
-            raise Exception("Failed to handle received message.")
+            raise
         finally:
             message.ack()
 
@@ -195,7 +195,7 @@ class AsyncAdapter:
             self.logger.error("There is not receiver for the given queue")
 
         self.logger.info(f"Preparing to rpc call. Publish exchange: {publish_exchange}; Receive queue: {receive_queue}")
-        await consumer.consume(self._rpc_callback_process)
+        await consumer.consume(self._rpc_response_callback)
 
         correlation_id = self._prepare_rpc_correlation_id()
         properties = dict(correlation_id=correlation_id, reply_to=receive_queue, expiration=ttl * 1000)
@@ -227,7 +227,7 @@ class AsyncAdapter:
         self._rpc_corr_id_dict[correlation_id] = future
         return correlation_id
 
-    def _rpc_callback_process(self, message: IncomingMessage) -> None:
+    def _rpc_response_callback(self, message: IncomingMessage) -> None:
         """
         Handles RPC response message, setting Future result to message body
         :param message: RPC response message
@@ -260,7 +260,7 @@ class AsyncAdapter:
         except asyncio.TimeoutError:
             self.logger.error(f"RPC timeout. Correlation id: {corr_id}")
             del self._rpc_corr_id_dict[corr_id]
-            future.set_exception(Exception(f'RPC timeout. Correlation id: {corr_id}'))
+            future.set_exception(TimeoutError(f'RPC timeout. Correlation id: {corr_id}'))
 
         return future
 
