@@ -76,7 +76,7 @@ class TestConsumerPublisher:
                                                   consumer: Consumer) -> Union[bytes, None]:
         self._test_future = loop.create_future()
         await consumer.consume(self.message_handler)
-        await consumer.channel_config.reset_channel(None)
+        await consumer.channel_config.close_channel(None)
         await asyncio.sleep(0.1)  # Allow consumer to recover
         await publisher.publish(message=message)
         return await collect_future(self._test_future, timeout=10)
