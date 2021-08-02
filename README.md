@@ -6,16 +6,17 @@
 
 Tornado-Bunny
 =============
-RabbitMQ connector library for Python that is fully integrated with [Tornado Framework](http://www.tornadoweb.org).
+RabbitMQ connector library for Python that is fully integrated with the [aio-pika framework](https://aio-pika.readthedocs.io/en/latest/).
 
 Introduction
 ------------
-Tornado-Bunny is here to simplify working with RabbitMQ while using Tornado framework.
-This library offers asynchronous implementation of RabbitMQ connector that fully integrated with `tornado.ioloop`.
-Tornado-Bunny connector is all-in-one connector that support number of functionalities:
-1. publish - publish a message.
-2. receive - consume messages from a queue. If received properties is not none, it publishes result back to "reply_to" queue.
-3. rpc - publish a message with replay_to properties (correlation_id and queue name), waits for an answer message and returns value.
+Tornado-Bunny is here to simplify working with RabbitMQ while using aio-pika.
+This library offers an asynchronous implementation of a RabbitMQ connector which is fully integrated with `asyncio`.
+Tornado-Bunny provides an all-in-one adapter with the following functionalities:
+1. publish - Publish a message.
+2. receive - Consume messages from a queue. Can automatically reply to desired routes if the received message
+             contains a "reply_to" property.
+3. rpc - Implement RPC (Remote procedure call) logic using RabbitMQ. Publish a message with a reply_to property, wait for a reply message and return the reply's content.
 
 Installation
 ------------
@@ -25,15 +26,15 @@ pip install -U tornado_bunny
 
 Examples
 -------
-#### Simple Reciever (print messages from queue)
+#### Simple Receiver (print messages from queue)
 ```python
-import tornado.ioloop
-from tornado_bunny import TornadoAdapter
+import asyncio
+from tornado_bunny import AsyncAdapter, RabbitMQConnectionData
 
 RABBIT_URI = "amqp://guest:guest@127.0.0.1:5672/"
 
 if __name__ == "__main__":
-    io_loop = tornado.ioloop.IOLoop.instance()
+    loop = asyncio.get_event_loop()
     configuration = dict(
         publish=dict(
             exchange="some_ex",
@@ -47,9 +48,10 @@ if __name__ == "__main__":
             queue="some_q",
         )
     )
-    rabbit_connection = TornadoAdapter(rabbitmq_url=RABBIT_URI, configuration=configuration, io_loop=io_loop)
-    rabbit_connection.receive(handler=lambda msg: print(msg))
-    io_loop.start()
+    connection_data = RabbitMQConnectionData(username="guest", password="guest", connection_name="example")
+    adapter = AsyncAdapter(rabbitmq_connection_data=connection_data, configuration=configuration, loop=loop)
+    loop.create_task(adapter.receive(handler=lambda msg: print(msg.body), queue="some_q"))
+    loop.run_forever()
 ```
 
 #### Full Microservices Using RPC pattern
@@ -57,32 +59,53 @@ Example of 2 Microservices implementing a fully scalable application that calcul
 
 Architecture
 ------------
-1. `AsyncConnection` -
-    A class that handles a single connection to a RabbitMQ server. The class Constructor gets a parameter called “io_loop” assuming that the user who creates the connection will want to supply the io_loop by himself. This class supports both Tornado ioloop as well as asyncio ioloop. The main function of this class is get_connection() Which begins a series of asynchronous calls until an connection object is received using pika package.
-2. `ChannelConfiguration` -
-    A class that handles a single channel within a RabbitMQ connection. This class encapsulates an AsyncConnection object and it provides both publish and consume capabilities. This class gets a connection (AsyncConnection from the previous paragraph), an exchange, a routing key for publishing messages to and a queue to consume.
-3. `TornadoBunny` -
-    This class actually does the (all the) magic required for the RPC by using the classes we have built so far along with a few other little tricks.
-The class encapsulating two async channels (and two connections, respectively for each channel). The first channel is used for publishing messages while the other one is used for consuming messages.
-The class also has two dictionaries for storing the RPC related exchanges and correlation id’s state.
-The receive() function is responsible for consuming messages. If received properties of consumed message is not none, it publishes result back to `reply_to` queue.
-The publish() function is responsible for publishing a message to the given exchange.
-The rpc() function is the function that implements the RPC logic. First, it consumes the receiving queue, then it generates a unique uuid that will be used as the correlation id and therefore it stored as a key at the dictionary which linking between a correlation id and the caller. Afterwards the correlation id is attached along with the reply queue to a message properties object that attached to the message which then will finally be sent. At this stage we are yielding on the _wait_result() function that will be called only when we will get the response back.
+1. `RabbitMQConnectionData` -
+   A simple dataclass which contains all the relevant credentials and parameters necessary for opening a connection
+   to a RabbitMQ server.
+2. `AsyncConnection` -
+   A class responsible for the management of a single connection to a RabbitMQ server.
+   The class connects to a server whose credentials are specified in a `RabbitMQConnectionData` object passed to it.
+   The main function of this class is **get_connection** which uses aio-pika to open a robust connection to the server.
+3. `ChannelConfiguration` -
+   A class which manages a single channel within a given RabbitMQ connection.
+   This class encapsulates an AsyncConnection object, and exposes functionality to declare exchanges and queues.
+   This class receives a connection (AsyncConnection from the previous paragraph) and parameters relevant to the creation of the channel.
+4. `Publisher` -
+   A class which creates and uses a `ChannelConfiguration` object to publish messages to a given exchange.
+   Automatically declares the desired exchange with various configurable parameters, such as exchange type.
+   The main function of this class is **publish**, which ensures that the instance's channel is open and that
+   the relevant exchange has been declared, following which, it publishes a message to the exchange.
+5. `Consumer` -
+   A class which creates and uses a `ChannelConfiguration` object to consume messages from a given queue.
+   Automatically declares the desired queue, and optionally an exchange as well, with various configurable parameters.
+   The main functionality of this class is **consume**, which ensures that the instance's channel is open and that
+   the relevant queue and exchange have been declared and bound as desired, following which, it consumes messages from
+   the queue.
+6. `AsyncAdapter` -
+   A class which exposes all the desired functionality for this framework:
+   1. **publish**: Publish a message to a given exchange.
+   2. **receive**: Receive messages from a given queue. Messages received which have their `reply_to`
+      parameter set will automatically have a response sent to them containing the message handler's result.
+   3. **rpc**: Perform an RPC by publishing a message with its `reply_to` parameter set to the relevant value.
+
+   To perform these operations, each adapter instance receives a `RabbitMQConnectionData` instance,
+   which is used to create a `AsyncConnection` instance. This is in turn used to create the
+   `Publisher` and `Consumer` instances necessary to work with the queues and exchanges specified
+   in the configurations given to the `AsyncAdapter` in its constructor.
+   Each instance of the class also maintains a dictionary of correlation IDs relevant to messages
+   we are waiting on a response for, namely RPC requests.
 
 
 Todo
 ----
 * Implement Prometheus metrics support.
-* Enable passing an existing channel.
-* Support asyncio ioloop.
 * Server example - refactor it to render real HTML
-* Write Tests.
 
 Notes
 -----
-This package was inspired by various implementations that I have encountered over the years, especially on Python 2.7 versions.
-The current version including improvements and adjustments that enables to integrate with the most updated frameworks at the time that this package was developed:
-* Python 3.8
-* pika 1.1.0
-* tornado 6.0.4
+This package is inspired by various implementations that I have encountered over the years.
+The current version includes improvements and adjustments designed to improve integration
+with technologies and frameworks developed over the last few years:
+* Python 3.9
+* aio-pika 6.8.0
 * RabbitMQ Server 3.8.3 on Ubuntu 18

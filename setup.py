@@ -30,6 +30,7 @@ setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
     ],
     description="RabbitMQ connector library for Python that is fully integrated with the aio-pika framework",
     install_requires=requirements,
