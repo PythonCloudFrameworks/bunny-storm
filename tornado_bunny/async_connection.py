@@ -1,109 +1,115 @@
-from pika import URLParameters, ConnectionParameters
-from pika.adapters.tornado_connection import TornadoConnection
-from pika.adapters.asyncio_connection import AsyncioConnection
-from tornado import gen
-from tornado.ioloop import IOLoop
-from tornado.queues import Queue, QueueEmpty
+import asyncio
+from logging import Logger
+from typing import Union
+
+from aio_pika import connect_robust, RobustConnection, RobustChannel
+
+from . import RabbitMQConnectionData
 
 
 class AsyncConnection:
-    INIT_STATUS = "init"
-    CONNECTING_STATUS = "connecting"
-    OPEN_STATUS = "open"
-    CLOSE_STATUS = "close"
-    TIMEOUT_STATUS = 'timeout'
+    """
+    Responsible for the management of a connection to a RabbitMQ server
+    """
+    _logger: Logger
+    _loop: asyncio.AbstractEventLoop
 
-    def __init__(self, rabbitmq_url, io_loop, logger, timeout=10):
-        self.should_reconnect = False
+    _connection: Union[RobustConnection, None]
+    _rabbitmq_url: RabbitMQConnectionData
+    _properties: dict
 
-        self._parameters = ConnectionParameters("127.0.0.1") if rabbitmq_url in ["localhost", "127.0.0.1"] else \
-            URLParameters(rabbitmq_url)
-        self._io_loop = io_loop
-        self._timeout = timeout
+    _timeout: int
+    _connection_attempts: int
+    _attempt_backoff: int
+
+    _connection_lock: asyncio.Lock
+
+    def __init__(self, rabbitmq_connection_data: RabbitMQConnectionData, logger: Logger,
+                 loop: asyncio.AbstractEventLoop = None, properties: dict = None,  timeout: Union[int, float] = 10,
+                 connection_attempts: int = 5, attempt_backoff: int = 5):
+        """
+        :param rabbitmq_connection_data: RabbitMQConnectionData instance containing desired connection credentials
+        :param logger: Logger
+        :param loop: Event loop to use. Defaults to current event loop if None is passed.
+        :param properties: Connection properties
+        :param timeout: Connection timeout
+        :param connection_attempts: Connection retry attempts
+        :param attempt_backoff: Time waited between connection attempts
+        """
         self._logger = logger
-        self._connection_queue = Queue(maxsize=1)
-        self._current_status = self.INIT_STATUS
+        self._loop = loop or asyncio.get_event_loop()
+
+        self._rabbitmq_connection_data = rabbitmq_connection_data
+        self._properties = properties or dict()
+
+        self._timeout = timeout
+        self._connection_attempts = connection_attempts
+        self._attempt_backoff = attempt_backoff
+
+        self._connection_lock = asyncio.Lock()
+        self._connection = None
 
     @property
-    def logger(self):
+    def logger(self) -> Logger:
+        """
+        :return: self._logger
+        """
         return self._logger
 
-    @property
-    def status_ok(self):
-        return self._current_status != self.CLOSE_STATUS \
-               and self._current_status != self.TIMEOUT_STATUS
+    async def get_connection(self) -> RobustConnection:
+        """
+        Gets or creates a connection to a RabbitMQ server.
+        If we already have an open connection, returns it, otherwise opens a new connection.
+        Avoids race conditions using a Lock.
+        If creating a new connection fails, stops the event loop and raises an exception.
+        :return: Robust RabbitMQ connection
+        """
+        await self._connection_lock.acquire()
+        if not self.is_connected():
+            try:
+                self._connection = await self._connect()
+            except ConnectionError:
+                self.logger.error("Failed to connect to RabbitMQ, stopping loop.")
+                self._loop.stop()
+        self._connection_lock.release()
+        return self._connection
 
-    @gen.coroutine
-    def get_connection(self):
-        if self._current_status == self.INIT_STATUS:
-            self._current_status = self.CONNECTING_STATUS
-            self._connect()
-        conn = yield self._top()
-        return conn
+    def is_connected(self) -> bool:
+        """
+        :return: Whether or not there is currently an open connection stored in this object
+        """
+        return not ((self._connection is None) or (self._connection.connection is None) or self._connection.is_closed)
 
-    def _connect(self):
-        try:
-            self._try_connect()
-        except Exception as e:
-            self.logger.exception(f"Failed to connect to RabbitMQ.")
+    async def _connect(self) -> RobustConnection:
+        """
+        Attempts to create a robust connection to a RabbitMQ server.
+        Contains a retry mechanism which attempts to connect a configurable amount of times, with a configurable timeout
+        and configurable backoff between each connection attempt.
+        :return: Created robust connection
+        :raise: ConnectionError in case connecting fails
+        """
+        for attempt_num in range(1, self._connection_attempts + 1):
+            uri = self._rabbitmq_connection_data.uri()
+            self.logger.info(f"Connecting to RabbitMQ, URI: {uri}, Attempt: {attempt_num}")
+            try:
+                connection = await connect_robust(url=uri,
+                                                  loop=self._loop,
+                                                  timeout=self._timeout,
+                                                  client_properties=self._properties)
+                return connection
+            except (asyncio.TimeoutError, ConnectionError):
+                self.logger.error(f"Connection attempt {attempt_num} / {self._connection_attempts} failed")
+                if attempt_num < self._connection_attempts:
+                    self.logger.debug(f"Going to sleep for {self._attempt_backoff} seconds")
+                    await asyncio.sleep(self._attempt_backoff)
+            except BaseException:
+                raise ConnectionError("Unexpected exception during connection attempt")
+        raise ConnectionError(f"Failed to connect to RabbitMQ server {self._connection_attempts} times")
 
-    @gen.coroutine
-    def _top(self):
-        conn = yield self._connection_queue.get()
-        self._connection_queue.put(conn)
-        return conn
-
-    def _on_timeout(self):
-        if self._current_status == self.CONNECTING_STATUS:
-            self.logger.error("Creating connection timed out")
-            self._current_status = self.TIMEOUT_STATUS
-            self.stop()
-
-    def _open_callback(self, connection):
-        self.logger.info("Created connection")
-        self._current_status = self.OPEN_STATUS
-        self._connection_queue.put(connection)
-
-    def _open_error_callback(self, connection, exception):
-        self.logger.error(f"Open connection with error: {exception}")
-        self._current_status = self.CLOSE_STATUS
-        self.reconnect()
-
-    def _close_callback(self, connection, reason):
-        self.logger.error(f"Closing connection: reason: {reason}. System will exist")
-        self._current_status = self.CLOSE_STATUS
-        self.reconnect()
-
-    def reconnect(self):
-        self.should_reconnect = True
-        try:
-            self._connection_queue.get_nowait()
-        except QueueEmpty:
-            pass
-        self.stop()
-
-    def stop(self):
-        if self.should_reconnect:
-            self.logger.info("Restarting")
-            self._current_status = self.INIT_STATUS
-            self._connect()
-        else:
-            self.logger.info('Stopping')
-            self._io_loop.stop()
-
-    def _try_connect(self):
-        self.logger.info("Creating connection to RabbitMQ")
-        self._io_loop.call_later(self._timeout, self._on_timeout)
-
-        if isinstance(self._io_loop, IOLoop):
-            TornadoConnection(self._parameters,
-                              on_open_callback=self._open_callback,
-                              on_open_error_callback=self._open_error_callback,
-                              on_close_callback=self._close_callback,
-                              custom_ioloop=self._io_loop)
-        else:
-            AsyncioConnection(self._parameters,
-                              on_open_callback=self._open_callback,
-                              on_open_error_callback=self._open_error_callback,
-                              on_close_callback=self._close_callback,
-                              custom_ioloop=self._io_loop)
+    async def close(self) -> None:
+        """
+        Closes the connection stored in this object
+        """
+        if not self.is_connected():
+            return
+        await self._connection.close()

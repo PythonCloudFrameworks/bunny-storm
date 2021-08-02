@@ -4,28 +4,31 @@ name: Tornado Bunny CI/CD
 # events but only for the master branch
 on:
   push:
-    branches: [ master ]
+    paths:
+      - "**"
   pull_request:
-    branches: [ master ]
-
+    branches:
+      - master
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   test:
+    runs-on: ${{ matrix.os }}
     # The type of runner that the job will run on
-    runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.7, 3.8]
+        os: ["ubuntu-18.04", "ubuntu-20.04"]
+        python-version: [3.7, 3.8, 3.9]
     # Set up rabbitmq service
     services:
       rabbitmq:
         image: rabbitmq
-        env:
-          RABBITMQ_DEFAULT_USER: test_user
-          RABBITMQ_DEFAULT_PASS: pass123
-          RABBITMQ_DEFAULT_VHOST: /
         ports:
           - 5672:5672
+        options: >-
+          --health-cmd "rabbitmqctl authenticate_user guest guest"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
@@ -50,42 +53,11 @@ jobs:
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
       - name: Test with pytest
         env:
-          RABBITMQ_USER: test_user
-          RABBITMQ_PASS: pass123
-          RABBITMQ_HOST: localhost
+          RABBITMQ_USER: "guest"
+          RABBITMQ_PASSWORD: "guest"
+          RABBITMQ_HOST: "localhost"
+          RABBITMQ_PORT: ${{ job.services.rabbitmq.ports['5672'] }}
+          RABBITMQ_VIRTUAL_HOST: "/"
         run: |
           pip install .
           pytest tests/ --doctest-modules --cov=tornado_bunny
-
-  build:
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
-        with:
-            python-version: 3.8
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install setuptools wheel twine
-      - name: Update Version
-        run: |
-          VERSION=$(git describe --abbrev=0 --tags)
-          VERSION_BITS=(${VERSION//./ })
-          MINOR=${VERSION_BITS[2]}
-          NEW_MINOR=$((MINOR+1))
-          NEW_TAG="${VERSION_BITS[0]}.${VERSION_BITS[1]}.$NEW_MINOR"
-          echo "Updating $VERSION to $NEW_TAG"
-          git tag $NEW_TAG
-          git push --tags
-      - name: Build and Publish Python Package
-        env:
-          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-        run: |
-          python setup.py sdist bdist_wheel
-          twine upload dist/*
