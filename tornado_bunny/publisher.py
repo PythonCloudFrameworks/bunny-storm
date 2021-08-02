@@ -24,7 +24,7 @@ class Publisher:
     def __init__(self, connection: AsyncConnection, logger: Logger, exchange_name: str,
                  loop: asyncio.AbstractEventLoop = None, exchange_type: str = "topic", routing_key: str = None,
                  durable: bool = False, auto_delete: bool = False, prefetch_count: int = 1,
-                 channel_number: int = None, publisher_confirms: bool = True, on_return_raises: bool = False):
+                 channel_number: int = None, publisher_confirms: bool = True, on_return_raises: bool = True):
         """
         :param connection: AsyncConnection to pass to ChannelConfiguration
         :param logger: Logger
@@ -100,20 +100,25 @@ class Publisher:
         await self._prepare_publish()
         publish_exception = None
         try:
-            await self._exchange.publish(
+            result = await self._exchange.publish(
                 message=message,
                 routing_key=self._routing_key,
                 mandatory=mandatory,
                 immediate=immediate,
                 timeout=timeout
             )
+            if self.channel_config.publisher_confirms and not result:
+                raise ValueError("Publisher confirm failed")
         except aiormq.exceptions.ChannelNotFoundEntity as exc:
             self.logger.error(f"Exchange {self._exchange} was not found, resetting channel")
             publish_exception = exc
         except aio_pika.exceptions.DeliveryError as exc:
             self.logger.error(f"Message {message} was returned, resetting channel")
             publish_exception = exc
+        except ValueError as exc:
+            self.logger.error("Publisher confirm failed")
+            publish_exception = exc
 
         if publish_exception:
-            await self.channel_config.reset_channel(publish_exception)
+            await self.channel_config.close_channel(publish_exception)
             await self.publish(message, mandatory, immediate, timeout)

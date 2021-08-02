@@ -13,7 +13,7 @@ from . import RabbitMQConnectionData, AsyncConnection, Consumer, Publisher
 
 class AsyncAdapter:
     """
-    An asynchronous RabbitMQ client, that uses aio-pika to complete invoking.
+    An asynchronous RabbitMQ client which is fully integrated with aio-pika.
     All-in-one adapter which provides the following interfaces:
     1. publish - Publish a message.
     2. receive - Consume messages from a queue. Can automatically reply to desired routes if the received message
@@ -24,6 +24,11 @@ class AsyncAdapter:
     This class uses a single connection, and creates a Consumer for each receive channel passed in the configurations,
     and a Publisher for each publish channel passed in the configuration.
     """
+
+    _rabbitmq_connection_data: RabbitMQConnectionData
+    _logger: Logger
+    _loop: asyncio.AbstractEventLoop
+    _configuration: dict
 
     def __init__(self, rabbitmq_connection_data: RabbitMQConnectionData, configuration: dict, logger: Logger = None,
                  loop: asyncio.AbstractEventLoop = None, connection_properties: dict = None,
@@ -42,7 +47,7 @@ class AsyncAdapter:
         self._rabbitmq_connection_data = rabbitmq_connection_data
         self._logger = logger or self._create_logger()
         self._loop = loop or asyncio.get_event_loop()
-        self.configuration = configuration
+        self._configuration = configuration
 
         self._connection = AsyncConnection(
             rabbitmq_connection_data,
@@ -54,15 +59,15 @@ class AsyncAdapter:
             attempt_backoff
         )
 
-        self._publishers = {
-            publish_configuration["exchange_name"]: self.create_publisher(publish_configuration)
-            for publish_configuration in self.configuration["publish"].values()
-        }
-        self._consumers = {
-            receive_configuration["queue_name"]: self.create_consumer(receive_configuration)
-            for receive_configuration in self.configuration["receive"].values()
-        }
         self._rpc_corr_id_dict = dict()
+
+        self._publishers = dict()
+        for publish_configuration in self._configuration["publish"].values():
+            self.add_publisher(publish_configuration)
+
+        self._consumers = dict()
+        for receive_configuration in self._configuration["receive"].values():
+            self.add_consumer(receive_configuration)
 
     @staticmethod
     def _create_logger() -> Logger:
@@ -87,21 +92,25 @@ class AsyncAdapter:
         """
         return self._logger
 
-    def create_publisher(self, configuration: dict) -> Publisher:
+    def add_publisher(self, configuration: dict) -> Publisher:
         """
-        Creates a Publisher with the given configurations
+        Creates a Publisher with the given configurations and add to self._publishers
         :param configuration: Configuration to pass to publisher
         :return: Created publisher
         """
-        return Publisher(connection=self._connection, logger=self.logger, loop=self._loop, **configuration)
+        publisher = Publisher(connection=self._connection, logger=self.logger, loop=self._loop, **configuration)
+        self._publishers[configuration["exchange_name"]] = publisher
+        return publisher
 
-    def create_consumer(self, configuration: dict) -> Consumer:
+    def add_consumer(self, configuration: dict) -> Consumer:
         """
-        Creates a Consumer with the given configurations
+        Creates a Consumer with the given configurations and add to self._consumers
         :param configuration: Configurations to pass to Consumer
         :return: Created consumer
         """
-        return Consumer(connection=self._connection, logger=self.logger, loop=self._loop, **configuration)
+        consumer = Consumer(connection=self._connection, logger=self.logger, loop=self._loop, **configuration)
+        self._consumers[configuration["queue_name"]] = consumer
+        return consumer
 
     async def publish(self, body: bytes, exchange: str, properties: dict = None, mandatory: bool = True,
                       immediate: bool = False, timeout: Union[int, float, None] = None):

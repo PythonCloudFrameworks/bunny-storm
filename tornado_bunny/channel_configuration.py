@@ -67,6 +67,13 @@ class ChannelConfiguration:
         return self._started
 
     @property
+    def publisher_confirms(self) -> bool:
+        """
+        :return: self._publisher_confirms
+        """
+        return self._publisher_confirms
+
+    @property
     def logger(self) -> Logger:
         """
         :return: self._logger
@@ -105,7 +112,7 @@ class ChannelConfiguration:
 
         return self._channel
 
-    async def reset_channel(self, exc: BaseException) -> None:
+    async def close_channel(self, exc: BaseException) -> None:
         """
         Resets the channel.
         If the channel is already closed, calls the callback for the channel being closed.
