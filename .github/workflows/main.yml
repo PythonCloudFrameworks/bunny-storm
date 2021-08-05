@@ -54,20 +54,33 @@ jobs:
         run: |
           pip install .
           pytest tests/ --doctest-modules --cov=tornado_bunny
+      - name: Create coverage report
+#        if: ${{ github.ref == 'refs/heads/master' }} && ${{ matrix.python_version == "3.9" }} && ${{ matrix.os == "ubuntu-20.04" }}
+        run: |
+          coverage run --source tornado_bunny -m pytest
+          coverage report -m
+          coverage xml
+      - name: Upload coverage to Codecov
+#        if: ${{ github.ref == 'refs/heads/master' }} && ${{ matrix.python_version == "3.9" }} && ${{ matrix.os == "ubuntu-20.04" }}
+        uses: codecov/codecov-action@v2
+        env:
+          OS: "ubuntu-latest"
+          PYTHON: "3.9"
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: ./coverage/reports/
+          env_vars: OS,PYTHON
+          fail_ci_if_error: true
+          files: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+          path_to_write_report: ./coverage/codecov_report.txt
+          verbose: true
 
   deploy:
     needs: test
     runs-on: ubuntu-latest
-    services:
-      rabbitmq:
-        image: rabbitmq
-        ports:
-          - 5672:5672
-        options: >-
-          --health-cmd "rabbitmqctl authenticate_user guest guest"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+    if: github.ref == 'refs/heads/master'
     steps:
       - uses: actions/checkout@v2
         with:
@@ -79,8 +92,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install setuptools wheel twine pytest-cov
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install setuptools wheel twine
       - name: Update Version
         run: |
           VERSION=$(git describe --abbrev=0 --tags)
@@ -91,29 +103,7 @@ jobs:
           echo "Updating $VERSION to $NEW_TAG"
           git tag $NEW_TAG
           git push --tags
-      - name: Create coverage report
-        run: |
-          coverage run --source tornado_bunny -m pytest
-          coverage report -m
-          coverage xml
-      - name: Upload coverage to Codecov
-        if: github.ref == 'refs/heads/master'
-        uses: codecov/codecov-action@v2
-        env:
-            OS: "ubuntu-latest"
-            PYTHON: "3.9"
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          directory: ./coverage/reports/
-          env_vars: OS,PYTHON
-          fail_ci_if_error: true
-          files: ./coverage.xml
-          flags: unittests
-          name: codecov-umbrella
-          path_to_write_report: ./coverage/codecov_report.txt
-          verbose: true
       - name: Build and Publish Python Package
-        if: github.ref == 'refs/heads/master'
         env:
           TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
