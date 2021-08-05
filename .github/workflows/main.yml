@@ -57,11 +57,10 @@ jobs:
           coverage report -m
           coverage xml
       - name: Upload coverage to Codecov
-        if: ${{ github.ref == 'refs/heads/master' }} && ${{ matrix.python_version == '3.9' }} && ${{ matrix.os == 'ubuntu-20.04' }}
         uses: codecov/codecov-action@v2
         env:
-          OS: "ubuntu-latest"
-          PYTHON: "3.9"
+          OS: ${{ matrix.os }}
+          PYTHON: ${{ matrix.python-version }}
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           directory: ./coverage/reports/
