@@ -63,11 +63,11 @@ jobs:
         image: rabbitmq
         ports:
           - 5672:5672
-          options: >-
-            --health-cmd "rabbitmqctl authenticate_user guest guest"
-            --health-interval 10s
-            --health-timeout 5s
-            --health-retries 5
+        options: >-
+          --health-cmd "rabbitmqctl authenticate_user guest guest"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v2
         with:
