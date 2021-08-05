@@ -54,10 +54,6 @@ jobs:
         run: |
           pip install .
           pytest tests/ --doctest-modules --cov=tornado_bunny
-      - name: Create coverage report
-#        if: ${{ github.ref == 'refs/heads/master' }} && ${{ matrix.python_version == "3.9" }} && ${{ matrix.os == "ubuntu-20.04" }}
-        run: |
-          coverage run --source tornado_bunny -m pytest
           coverage report -m
           coverage xml
       - name: Upload coverage to Codecov
