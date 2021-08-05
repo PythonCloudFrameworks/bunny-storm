@@ -57,7 +57,7 @@ jobs:
           coverage report -m
           coverage xml
       - name: Upload coverage to Codecov
-#        if: ${{ github.ref == 'refs/heads/master' }} && ${{ matrix.python_version == "3.9" }} && ${{ matrix.os == "ubuntu-20.04" }}
+        if: ${{ github.ref == 'refs/heads/master' }} && ${{ matrix.python_version == "3.9" }} && ${{ matrix.os == "ubuntu-20.04" }}
         uses: codecov/codecov-action@v2
         env:
           OS: "ubuntu-latest"
@@ -70,7 +70,6 @@ jobs:
           files: ./coverage.xml
           flags: unittests
           name: codecov-umbrella
-          path_to_write_report: ./coverage/codecov_report.txt
           verbose: true
 
   deploy:
