@@ -58,6 +58,10 @@ if __name__ == "__main__":
 #### Full Microservices Using RPC pattern
 Example of 2 Microservices implementing a fully scalable application that calculates a number in the Fibonacci series while implementing [RabbitMQ Remote procedure call (RPC)](https://www.rabbitmq.com/tutorials/tutorial-six-python.html) pattern, can be found at the examples directory.
 
+Class Diagram
+------------
+![Class Diagram](class_diagram.jpeg)
+
 Architecture
 ------------
 1. `RabbitMQConnectionData` -
