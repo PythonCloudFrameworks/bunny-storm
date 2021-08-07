@@ -71,6 +71,7 @@ class AsyncConnection:
             except ConnectionError:
                 self.logger.error("Failed to connect to RabbitMQ, stopping loop.")
                 self._loop.stop()
+                raise
         self._connection_lock.release()
         return self._connection
 

@@ -2,7 +2,7 @@ import asyncio
 import logging
 import os
 import sys
-from typing import Any, Coroutine, Union
+from typing import Union
 
 import pytest
 
@@ -15,12 +15,12 @@ if sys.platform == 'win32':
 
 @pytest.fixture(scope="session")
 def rabbitmq_user() -> str:
-    return os.getenv("RABBITMQ_USER", "test_user")
+    return os.getenv("RABBITMQ_USER", "guest")
 
 
 @pytest.fixture(scope="session")
 def rabbitmq_password() -> str:
-    return os.getenv("RABBITMQ_PASSWORD", "pass123")
+    return os.getenv("RABBITMQ_PASSWORD", "guest")
 
 
 @pytest.fixture(scope="session")
@@ -35,7 +35,7 @@ def rabbitmq_port() -> int:
 
 @pytest.fixture(scope="session")
 def rabbitmq_virtual_host() -> str:
-    return os.getenv("RABBITMQ_VIRTUAL_HOST", "vhost")
+    return os.getenv("RABBITMQ_VIRTUAL_HOST", "/")
 
 
 @pytest.fixture(scope="function")
@@ -79,69 +79,57 @@ def logger() -> logging.Logger:
 
 
 @pytest.fixture(scope="function")
-def loop() -> asyncio.AbstractEventLoop:
-    return asyncio.get_event_loop()
-
-
-@pytest.fixture(scope="function")
-def async_connection(rabbitmq_connection_data: RabbitMQConnectionData, loop: asyncio.AbstractEventLoop,
+def async_connection(rabbitmq_connection_data: RabbitMQConnectionData, event_loop: asyncio.AbstractEventLoop,
                      logger: logging.Logger) -> AsyncConnection:
-    return AsyncConnection(rabbitmq_connection_data, logger, loop)
+    return AsyncConnection(rabbitmq_connection_data, logger, event_loop)
 
 
 @pytest.fixture(scope="function")
-def channel_config(async_connection: AsyncConnection, logger: logging.Logger,
-                   loop: asyncio.AbstractEventLoop) -> ChannelConfiguration:
-    channel_config = ChannelConfiguration(async_connection, logger, loop)
+async def channel_config(async_connection: AsyncConnection, logger: logging.Logger,
+                         event_loop: asyncio.AbstractEventLoop) -> ChannelConfiguration:
+    channel_config = ChannelConfiguration(async_connection, logger, event_loop)
     yield channel_config
     # Teardown
-    channel_configuration_teardown(channel_config)
+    await channel_configuration_teardown(channel_config)
 
 
 @pytest.fixture(scope="function")
-def publisher(async_connection: AsyncConnection, loop: asyncio.AbstractEventLoop, logger: logging.Logger,
-              configuration: dict) -> Publisher:
+async def publisher(async_connection: AsyncConnection, logger: logging.Logger, configuration: dict) -> Publisher:
     publisher = Publisher(async_connection, logger, **configuration["publish"])
     yield publisher
     # Teardown
-    publisher_teardown(publisher)
+    await publisher_teardown(publisher)
 
 
 @pytest.fixture(scope="function")
-def consumer(async_connection: AsyncConnection, loop: asyncio.AbstractEventLoop, logger: logging.Logger,
-             configuration: dict) -> ChannelConfiguration:
-    consumer = Consumer(async_connection, logger, loop, **configuration["receive"])
+async def consumer(async_connection: AsyncConnection, logger: logging.Logger, configuration: dict) -> Consumer:
+    consumer = Consumer(async_connection, logger, **configuration["receive"])
     yield consumer
     # Teardown
-    consumer_teardown(consumer)
+    await consumer_teardown(consumer)
 
 
-def channel_configuration_teardown(channel_configuration: ChannelConfiguration) -> None:
+async def channel_configuration_teardown(channel_configuration: ChannelConfiguration) -> None:
     if channel_configuration._channel:
-        run_coroutine_to_completion(channel_configuration._channel.close(exc=IntentionalCloseChannelError("Teardown")))
+        await channel_configuration._channel.close(exc=IntentionalCloseChannelError("Teardown"))
         channel_configuration._channel = None
 
 
-def consumer_teardown(consumer: Consumer) -> None:
+async def consumer_teardown(consumer: Consumer) -> None:
     if consumer._queue:
-        run_coroutine_to_completion(consumer._queue.delete(if_unused=False, if_empty=False))
+        await consumer._queue.delete(if_unused=False, if_empty=False)
         consumer._queue = None
     if consumer._exchange:
-        run_coroutine_to_completion(consumer._exchange.delete(if_unused=False))
+        await consumer._exchange.delete(if_unused=False)
         consumer._exchange = None
-    channel_configuration_teardown(consumer.channel_config)
+    await channel_configuration_teardown(consumer.channel_config)
 
 
-def publisher_teardown(publisher: Publisher) -> None:
+async def publisher_teardown(publisher: Publisher) -> None:
     if publisher._exchange:
-        run_coroutine_to_completion(publisher._exchange.delete(if_unused=False))
+        await publisher._exchange.delete(if_unused=False)
         publisher._exchange = None
-    channel_configuration_teardown(publisher.channel_config)
-
-
-def run_coroutine_to_completion(coroutine: Coroutine) -> Any:
-    loop = asyncio.get_event_loop()
-    return loop.run_until_complete(asyncio.gather(coroutine))[0]
+    await channel_configuration_teardown(publisher.channel_config)
 
 
 async def collect_future(future: asyncio.Future, timeout: Union[int, float]) -> Union[bytes, None]:
