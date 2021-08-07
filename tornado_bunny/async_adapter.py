@@ -135,7 +135,7 @@ class AsyncAdapter:
             message = Message(body, **properties)
             await publisher.publish(message, mandatory=mandatory, immediate=immediate, timeout=timeout)
         except Exception:
-            self.logger.exception(f"Failed to publish message")
+            self.logger.exception("Failed to publish message")
             raise
 
     async def receive(self, handler, queue: str, no_ack: bool = False) -> None:
@@ -154,7 +154,7 @@ class AsyncAdapter:
         try:
             await consumer.consume(self._on_message, handler=handler, no_ack=no_ack)
         except Exception:
-            self.logger.exception(f"Failed to receive message.")
+            self.logger.exception("Failed to receive message.")
             raise
 
     async def _on_message(self, message: IncomingMessage, handler: FunctionType) -> None:

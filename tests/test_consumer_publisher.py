@@ -36,10 +36,10 @@ class TestConsumerPublisher:
 
     @pytest.mark.asyncio
     async def test_consume_publish(self,
-                             event_loop: asyncio.AbstractEventLoop,
-                             message: Message,
-                             publisher: Publisher,
-                             consumer: Consumer):
+                                   event_loop: asyncio.AbstractEventLoop,
+                                   message: Message,
+                                   publisher: Publisher,
+                                   consumer: Consumer):
         # Arrange
         self._test_future = event_loop.create_future()
 
@@ -54,10 +54,10 @@ class TestConsumerPublisher:
 
     @pytest.mark.asyncio
     async def test_consume_publish_close_channel(self,
-                                           event_loop: asyncio.AbstractEventLoop,
-                                           message: Message,
-                                           publisher: Publisher,
-                                           consumer: Consumer):
+                                                 event_loop: asyncio.AbstractEventLoop,
+                                                 message: Message,
+                                                 publisher: Publisher,
+                                                 consumer: Consumer):
         # Arrange
         self._test_future = event_loop.create_future()
 

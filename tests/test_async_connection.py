@@ -23,8 +23,8 @@ async def test_async_connection_get_connection(event_loop: asyncio.AbstractEvent
 
 @pytest.mark.asyncio
 async def test_async_connection_connection_failure(event_loop: asyncio.AbstractEventLoop,
-                                             logger: logging.Logger,
-                                             rabbitmq_connection_data: RabbitMQConnectionData) -> None:
+                                                   logger: logging.Logger,
+                                                   rabbitmq_connection_data: RabbitMQConnectionData) -> None:
     # Arrange
     rabbitmq_connection_data.host = "1.1.1.1"
     async_connection = AsyncConnection(rabbitmq_connection_data,
@@ -41,8 +41,8 @@ async def test_async_connection_connection_failure(event_loop: asyncio.AbstractE
 
 @pytest.mark.asyncio
 async def test_async_connection_close_connection(event_loop: asyncio.AbstractEventLoop,
-                                           logger: logging.Logger,
-                                           rabbitmq_connection_data: RabbitMQConnectionData) -> None:
+                                                 logger: logging.Logger,
+                                                 rabbitmq_connection_data: RabbitMQConnectionData) -> None:
     # Arrange
     async_connection = AsyncConnection(rabbitmq_connection_data, logger, event_loop)
     connection = await async_connection.get_connection()

@@ -2,7 +2,7 @@ import asyncio
 from logging import Logger
 from typing import Union
 
-from aio_pika import connect_robust, RobustConnection, RobustChannel
+from aio_pika import connect_robust, RobustConnection
 
 from . import RabbitMQConnectionData
 
