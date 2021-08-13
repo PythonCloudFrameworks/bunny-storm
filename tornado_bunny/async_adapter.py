@@ -135,7 +135,7 @@ class AsyncAdapter:
             message = Message(body, **properties)
             await publisher.publish(message, mandatory=mandatory, immediate=immediate, timeout=timeout)
         except Exception:
-            self.logger.exception(f"Failed to publish message")
+            self.logger.exception("Failed to publish message")
             raise
 
     async def receive(self, handler, queue: str, no_ack: bool = False) -> None:
@@ -154,7 +154,7 @@ class AsyncAdapter:
         try:
             await consumer.consume(self._on_message, handler=handler, no_ack=no_ack)
         except Exception:
-            self.logger.exception(f"Failed to receive message.")
+            self.logger.exception("Failed to receive message.")
             raise
 
     async def _on_message(self, message: IncomingMessage, handler: FunctionType) -> None:
@@ -201,7 +201,7 @@ class AsyncAdapter:
         """
         consumer = self._consumers.get(receive_queue)
         if consumer is None:
-            self.logger.error("There is not receiver for the given queue")
+            raise KeyError(f"There is no consumer for the given queue: {receive_queue}")
 
         self.logger.info(f"Preparing to rpc call. Publish exchange: {publish_exchange}; Receive queue: {receive_queue}")
         await consumer.consume(self._rpc_response_callback)
@@ -241,12 +241,12 @@ class AsyncAdapter:
         Handles RPC response message, setting Future result to message body
         :param message: RPC response message
         """
-        self.logger.info(f"RPC get response, correlation id: {message.correlation_id}")
+        self.logger.info(f"Received RPC response. Correlation id: {message.correlation_id}")
         if message.correlation_id in self._rpc_corr_id_dict:
-            self.logger.info(f"RPC get response, correlation id: {message.correlation_id} was found in state dict")
+            self.logger.info(f"Received RPC response. Correlation id: {message.correlation_id} was found")
             self._rpc_corr_id_dict[message.correlation_id].set_result(message.body)
         else:
-            self.logger.warning(f"RPC get non exist response. Correlation id: {message.correlation_id}")
+            self.logger.warning(f"Received unexpected RPC response. Correlation id: {message.correlation_id}")
         message.ack()
 
     async def _wait_result(self, corr_id: str, timeout: Union[int, float, None] = None) -> asyncio.Future:
@@ -256,7 +256,7 @@ class AsyncAdapter:
         :param timeout: Timeout in seconds
         :return: Future whose result we set
         """
-        self.logger.info(f"Beginning waiting for result. {corr_id}")
+        self.logger.info(f"Starting to wait for result. {corr_id}")
         try:
             future = self._rpc_corr_id_dict[corr_id]
         except KeyError:
@@ -269,6 +269,7 @@ class AsyncAdapter:
         except asyncio.TimeoutError:
             self.logger.error(f"RPC timeout. Correlation id: {corr_id}")
             del self._rpc_corr_id_dict[corr_id]
+            future = asyncio.Future()
             future.set_exception(TimeoutError(f'RPC timeout. Correlation id: {corr_id}'))
 
         return future

@@ -2,7 +2,7 @@ import asyncio
 from logging import Logger
 from typing import Union
 
-from aio_pika import connect_robust, RobustConnection, RobustChannel
+from aio_pika import connect_robust, RobustConnection
 
 from . import RabbitMQConnectionData
 
@@ -71,6 +71,7 @@ class AsyncConnection:
             except ConnectionError:
                 self.logger.error("Failed to connect to RabbitMQ, stopping loop.")
                 self._loop.stop()
+                raise
         self._connection_lock.release()
         return self._connection
 
