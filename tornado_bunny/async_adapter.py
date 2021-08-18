@@ -61,12 +61,17 @@ class AsyncAdapter:
 
         self._rpc_corr_id_dict = dict()
 
+        self._default_publisher = Publisher(connection=self._connection,
+                                            logger=self.logger,
+                                            exchange_name="",
+                                            loop=self._loop)
+
         self._publishers = dict()
-        for publish_configuration in self._configuration["publish"].values():
+        for publish_configuration in self._configuration.get("publish", dict()).values():
             self.add_publisher(publish_configuration)
 
         self._consumers = dict()
-        for receive_configuration in self._configuration["receive"].values():
+        for receive_configuration in self._configuration.get("receive", dict()).values():
             self.add_consumer(receive_configuration)
 
     @staticmethod
@@ -171,11 +176,12 @@ class AsyncAdapter:
             if message.reply_to is not None:
                 self.logger.info(f"Sending result back to "
                                  f"queue: {message.reply_to}, correlation id: {message.correlation_id}")
-                publisher = list(self._publishers.values())[0]
                 response_message = Message(body=result,
                                            correlation_id=message.correlation_id,
                                            reply_to=message.reply_to)
-                await publisher.publish(message=response_message, mandatory=False)
+                await self._default_publisher.default_exchange_publish(message=response_message,
+                                                                       routing_key=message.reply_to,
+                                                                       mandatory=False)
                 self.logger.info(f"Sent result back to caller. "
                                  f"Queue: {message.reply_to}, correlation id: {message.correlation_id}")
         except Exception:
@@ -227,10 +233,9 @@ class AsyncAdapter:
         :return: Correlation ID
         """
         correlation_id = str(uuid.uuid1())
+        while correlation_id in self._rpc_corr_id_dict:
+            correlation_id = str(uuid.uuid1())
         self.logger.info(f"Starting rpc calling correlation id: {correlation_id}")
-        if correlation_id in self._rpc_corr_id_dict:
-            self.logger.warning(f"Correlation id exists before calling. {correlation_id}")
-            del self._rpc_corr_id_dict[correlation_id]
 
         future = self._loop.create_future()
         self._rpc_corr_id_dict[correlation_id] = future
