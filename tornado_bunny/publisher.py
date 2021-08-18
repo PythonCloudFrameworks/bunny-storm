@@ -4,7 +4,7 @@ from typing import Union
 
 import aio_pika
 import aiormq
-from aio_pika import Message
+from aio_pika import Message, RobustExchange
 
 from . import ChannelConfiguration, AsyncConnection
 
@@ -83,6 +83,34 @@ class Publisher:
             auto_delete=self._auto_delete
         )
 
+    async def _publish_message(self,
+                               exchange: RobustExchange,
+                               message: Message,
+                               routing_key: str,
+                               mandatory: bool = True,
+                               immediate: bool = False,
+                               timeout: Union[int, float, None] = None) -> Union[Exception, None]:
+        self.logger.info(f"Publishing message. exchange: {exchange}; routing_key: {routing_key}; message: {message}")
+        try:
+            result = await exchange.publish(
+                message=message,
+                routing_key=routing_key,
+                mandatory=mandatory,
+                immediate=immediate,
+                timeout=timeout
+            )
+            if self.channel_config.publisher_confirms and not result:
+                raise ValueError("Publisher confirm failed")
+        except aiormq.exceptions.ChannelNotFoundEntity as exc:
+            self.logger.error(f"Exchange {self._exchange} was not found, resetting channel")
+            return exc
+        except aio_pika.exceptions.DeliveryError as exc:
+            self.logger.error(f"Message {message} was returned, resetting channel")
+            return exc
+        except ValueError as exc:
+            self.logger.error("Publisher confirm failed")
+            return exc
+
     async def publish(self,
                       message: Message,
                       mandatory: bool = True,
@@ -95,30 +123,34 @@ class Publisher:
         :param immediate: Whether or not the message should be immediate
         :param timeout: Publish timeout
         """
-        self.logger.info(f"Publishing message. exchange: {self._exchange}; routing_key: {self._routing_key}; "
-                         f"message: {message}")
         await self._prepare_publish()
-        publish_exception = None
-        try:
-            result = await self._exchange.publish(
-                message=message,
-                routing_key=self._routing_key,
-                mandatory=mandatory,
-                immediate=immediate,
-                timeout=timeout
-            )
-            if self.channel_config.publisher_confirms and not result:
-                raise ValueError("Publisher confirm failed")
-        except aiormq.exceptions.ChannelNotFoundEntity as exc:
-            self.logger.error(f"Exchange {self._exchange} was not found, resetting channel")
-            publish_exception = exc
-        except aio_pika.exceptions.DeliveryError as exc:
-            self.logger.error(f"Message {message} was returned, resetting channel")
-            publish_exception = exc
-        except ValueError as exc:
-            self.logger.error("Publisher confirm failed")
-            publish_exception = exc
-
+        publish_exception = await self._publish_message(
+            exchange=self._exchange,
+            message=message,
+            routing_key=self._routing_key,
+            mandatory=mandatory,
+            immediate=immediate,
+            timeout=timeout
+        )
         if publish_exception:
             await self.channel_config.close_channel(publish_exception)
             await self.publish(message, mandatory, immediate, timeout)
+
+    async def default_exchange_publish(self,
+                                       message: Message,
+                                       routing_key: str,
+                                       mandatory: bool = True,
+                                       immediate: bool = False,
+                                       timeout: Union[int, float, None] = None) -> None:
+        exchange = await self.channel_config.get_default_exchange()
+        publish_exception = await self._publish_message(
+            exchange=exchange,
+            message=message,
+            routing_key=routing_key,
+            mandatory=mandatory,
+            immediate=immediate,
+            timeout=timeout
+        )
+        if publish_exception:
+            await self.channel_config.close_channel(publish_exception)
+            await self.default_exchange_publish(message, routing_key, mandatory, immediate, timeout)

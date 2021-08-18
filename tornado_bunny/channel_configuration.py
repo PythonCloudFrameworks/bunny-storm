@@ -87,6 +87,10 @@ class ChannelConfiguration:
         """
         return self._loop
 
+    async def get_default_exchange(self) -> RobustExchange:
+        await self.ensure_channel()
+        return self._channel.default_exchange
+
     def add_close_callback(self, callback: CloseCallbackType) -> None:
         """
         Adds a callback which will be called in case the channel is closed. Callbacks are called sequentially.
@@ -102,13 +106,12 @@ class ChannelConfiguration:
         Uses a Lock to ensure that no race conditions can occur.
         :return: Robust channel held by this instance
         """
-        await self._channel_lock.acquire()
-        if not self._started:
-            await self._start_channel()
+        async with self._channel_lock:
+            if not self._started:
+                await self._start_channel()
 
-        if self._channel.is_closed:
-            await self._channel.reopen()
-        self._channel_lock.release()
+            if self._channel.is_closed:
+                await self._channel.reopen()
 
         return self._channel
 

@@ -64,15 +64,14 @@ class AsyncConnection:
         If creating a new connection fails, stops the event loop and raises an exception.
         :return: Robust RabbitMQ connection
         """
-        await self._connection_lock.acquire()
-        if not self.is_connected():
-            try:
-                self._connection = await self._connect()
-            except ConnectionError:
-                self.logger.error("Failed to connect to RabbitMQ, stopping loop.")
-                self._loop.stop()
-                raise
-        self._connection_lock.release()
+        async with self._connection_lock:
+            if not self.is_connected():
+                try:
+                    self._connection = await self._connect()
+                except ConnectionError:
+                    self.logger.error("Failed to connect to RabbitMQ, stopping loop.")
+                    self._loop.stop()
+                    raise
         return self._connection
 
     def is_connected(self) -> bool:

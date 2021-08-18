@@ -25,16 +25,6 @@ def rpc_executor_config() -> dict:
                 auto_delete=False,
                 prefetch_count=10
             )
-        ),
-        publish=dict(
-            outgoing=dict(
-                exchange_name="echo_responses",
-                exchange_type="direct",
-                routing_key="echo_response",
-                durable=True,
-                auto_delete=False,
-                prefetch_count=1
-            )
         )
     )
 
