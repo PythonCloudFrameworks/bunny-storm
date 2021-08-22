@@ -14,5 +14,5 @@ pytest-runner>=5.1
 
 aiohttp>=3.7.4.post0
 setuptools>=57.2.0
-aiormq>=3.3.1
+aiormq>=3.2.3
 aio-pika>=6.8.0
