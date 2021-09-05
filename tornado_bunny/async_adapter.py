@@ -117,12 +117,13 @@ class AsyncAdapter:
         self._consumers[configuration["queue_name"]] = consumer
         return consumer
 
-    async def publish(self, body: bytes, exchange: str, properties: dict = None, mandatory: bool = True,
-                      immediate: bool = False, timeout: Union[int, float, None] = None):
+    async def publish(self, body: bytes, exchange: str, routing_key: str = None, properties: dict = None,
+                      mandatory: bool = True, immediate: bool = False, timeout: Union[int, float, None] = None):
         """
         Publish a message using the publisher relevant to the exchange given.
         :param body: message
         :param exchange: The exchange to publish to
+        :param routing_key: The routing key to send the message with
         :param properties: RabbitMQ message properties
         :param mandatory: RabbitMQ publish mandatory param
         :param immediate: Whether or not message should be immediate
@@ -138,7 +139,8 @@ class AsyncAdapter:
 
         try:
             message = Message(body, **properties)
-            await publisher.publish(message, mandatory=mandatory, immediate=immediate, timeout=timeout)
+            await publisher.publish(
+                message, routing_key=routing_key, mandatory=mandatory, immediate=immediate, timeout=timeout)
         except Exception:
             self.logger.exception("Failed to publish message")
             raise
