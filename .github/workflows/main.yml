@@ -58,6 +58,7 @@ jobs:
           coverage xml
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v2
+        if: github.ref == 'refs/heads/master'
         env:
           OS: ${{ matrix.os }}
           PYTHON: ${{ matrix.python-version }}

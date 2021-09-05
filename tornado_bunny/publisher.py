@@ -31,7 +31,7 @@ class Publisher:
         :param loop: Loop
         :param exchange_name: Exchange name to send messages to
         :param exchange_type: Exchange type
-        :param routing_key: Routing key to send to
+        :param routing_key: Default routing key to send the message with
         :param durable: Exchange durability
         :param auto_delete: Whether or not exchange auto deletes
         :param prefetch_count: Prefetch count for ChannelConfiguration
@@ -113,12 +113,14 @@ class Publisher:
 
     async def publish(self,
                       message: Message,
+                      routing_key: str = None,
                       mandatory: bool = True,
                       immediate: bool = False,
                       timeout: Union[int, float, None] = None) -> None:
         """
         Publishes the given message to the desired exchange with the desired routing key
         :param message: Message to publish
+        :param routing_key: Routing key to send the message with, defaults to the publisher's
         :param mandatory: Whether or not the message is mandatory
         :param immediate: Whether or not the message should be immediate
         :param timeout: Publish timeout
@@ -127,14 +129,14 @@ class Publisher:
         publish_exception = await self._publish_message(
             exchange=self._exchange,
             message=message,
-            routing_key=self._routing_key,
+            routing_key=routing_key or self._routing_key,
             mandatory=mandatory,
             immediate=immediate,
             timeout=timeout
         )
         if publish_exception:
             await self.channel_config.close_channel(publish_exception)
-            await self.publish(message, mandatory, immediate, timeout)
+            await self.publish(message, routing_key, mandatory, immediate, timeout)
 
     async def default_exchange_publish(self,
                                        message: Message,
