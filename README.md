@@ -1,3 +1,4 @@
+![](bunny_banner.png)
 ![badge](https://github.com/odedshimon/tornado-bunny/workflows/Tornado%20Bunny%20CI/CD/badge.svg)
 [![PyPI version fury.io](https://badge.fury.io/py/tornado-bunny.svg)](https://pypi.python.org/pypi/tornado-bunny/)
 [![codecov](https://codecov.io/gh/PythonCloudFrameworks/tornado-bunny/branch/master/graph/badge.svg?token=1HWGBGCV0G)](https://codecov.io/gh/PythonCloudFrameworks/tornado-bunny)
@@ -5,7 +6,7 @@
 [![PyPI pyversions](https://img.shields.io/pypi/pyversions/tornado-bunny.svg)](https://pypi.python.org/pypi/tornado-bunny/)
 [![Ask Me Anything !](https://img.shields.io/badge/Ask%20me-anything-1abc9c.svg)](https://github.com/odedshimon/tornado-bunny/)
 
-Tornado-Bunny
+About
 =============
 RabbitMQ connector library for Python that is fully integrated with the [aio-pika framework](https://aio-pika.readthedocs.io/en/latest/).
 
