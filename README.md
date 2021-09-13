@@ -1,4 +1,4 @@
-![](bunny_banner.png)
+![](readme_media/bunny_banner.png)
 ![badge](https://github.com/odedshimon/tornado-bunny/workflows/Tornado%20Bunny%20CI/CD/badge.svg)
 [![PyPI version fury.io](https://badge.fury.io/py/tornado-bunny.svg)](https://pypi.python.org/pypi/tornado-bunny/)
 [![codecov](https://codecov.io/gh/PythonCloudFrameworks/tornado-bunny/branch/master/graph/badge.svg?token=1HWGBGCV0G)](https://codecov.io/gh/PythonCloudFrameworks/tornado-bunny)
@@ -61,7 +61,7 @@ Example of 2 Microservices implementing a fully scalable application that calcul
 
 Class Diagram
 ------------
-![Class Diagram](class_diagram.jpeg)
+![Class Diagram](readme_media/class_diagram.jpeg)
 
 Architecture
 ------------
