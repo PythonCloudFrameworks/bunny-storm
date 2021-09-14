@@ -4,7 +4,7 @@ import logging
 import pytest
 from aio_pika import RobustConnection
 
-from tornado_bunny import RabbitMQConnectionData, AsyncConnection
+from bunny_storm import RabbitMQConnectionData, AsyncConnection
 
 
 @pytest.mark.asyncio

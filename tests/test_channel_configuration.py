@@ -4,7 +4,7 @@ import pytest
 from aio_pika import RobustExchange, RobustQueue
 
 from tests.conftest import channel_configuration_teardown
-from tornado_bunny import AsyncConnection, ChannelConfiguration
+from bunny_storm import AsyncConnection, ChannelConfiguration
 
 
 @pytest.mark.asyncio

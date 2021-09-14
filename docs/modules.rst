@@ -1,7 +1,7 @@
-tornado_bunny
+bunny_storm
 =============
 
 .. toctree::
    :maxdepth: 4
 
-   tornado_bunny
+   bunny_storm

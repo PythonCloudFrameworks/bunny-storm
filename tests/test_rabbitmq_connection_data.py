@@ -1,4 +1,4 @@
-from tornado_bunny import RabbitMQConnectionData
+from bunny_storm import RabbitMQConnectionData
 
 
 def test_connection_data_creation() -> None:

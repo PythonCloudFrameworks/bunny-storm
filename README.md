@@ -1,10 +1,10 @@
-![](readme_media/bunny_banner.png)
-![badge](https://github.com/odedshimon/tornado-bunny/workflows/Tornado%20Bunny%20CI/CD/badge.svg)
-[![PyPI version fury.io](https://badge.fury.io/py/tornado-bunny.svg)](https://pypi.python.org/pypi/tornado-bunny/)
-[![codecov](https://codecov.io/gh/PythonCloudFrameworks/tornado-bunny/branch/master/graph/badge.svg?token=1HWGBGCV0G)](https://codecov.io/gh/PythonCloudFrameworks/tornado-bunny)
-[![PyPI download month](https://img.shields.io/pypi/dm/tornado-bunny.svg)](https://pypi.python.org/pypi/tornado-bunny/)
-[![PyPI pyversions](https://img.shields.io/pypi/pyversions/tornado-bunny.svg)](https://pypi.python.org/pypi/tornado-bunny/)
-[![Ask Me Anything !](https://img.shields.io/badge/Ask%20me-anything-1abc9c.svg)](https://github.com/odedshimon/tornado-bunny/)
+![](readme_media/logo_banner.png)
+![badge](https://github.com/odedshimon/bunny-storm/workflows/Bunny%20Storm%20CI/CD/badge.svg)
+[![PyPI version fury.io](https://badge.fury.io/py/bunny-storm.svg)](https://pypi.python.org/pypi/bunny-storm/)
+[![codecov](https://codecov.io/gh/PythonCloudFrameworks/bunny-storm/branch/master/graph/badge.svg?token=1HWGBGCV0G)](https://codecov.io/gh/PythonCloudFrameworks/bunny-storm)
+[![PyPI download month](https://img.shields.io/pypi/dm/bunny-storm.svg)](https://pypi.python.org/pypi/bunny-storm/)
+[![PyPI pyversions](https://img.shields.io/pypi/pyversions/bunny-storm.svg)](https://pypi.python.org/pypi/bunny-storm/)
+[![Ask Me Anything !](https://img.shields.io/badge/Ask%20me-anything-1abc9c.svg)](https://github.com/odedshimon/bunny-storm/)
 
 About
 =============
@@ -12,9 +12,9 @@ RabbitMQ connector library for Python that is fully integrated with the [aio-pik
 
 Introduction
 ------------
-Tornado-Bunny is here to simplify working with RabbitMQ while using aio-pika.
+BunnyStorm is here to simplify working with RabbitMQ while using aio-pika.
 This library offers an asynchronous implementation of a RabbitMQ connector which is fully integrated with `asyncio`.
-Tornado-Bunny provides an all-in-one adapter with the following functionalities:
+BunnyStorm provides an all-in-one adapter with the following functionalities:
 1. publish - Publish a message.
 2. receive - Consume messages from a queue. Can automatically reply to desired routes if the received message
              contains a "reply_to" property.
@@ -23,7 +23,7 @@ Tornado-Bunny provides an all-in-one adapter with the following functionalities:
 Installation
 ------------
 ```bash
-pip install -U tornado_bunny
+pip install -U bunny_storm
 ```
 
 Examples
@@ -31,7 +31,7 @@ Examples
 #### Simple Receiver (print messages from queue)
 ```python
 import asyncio
-from tornado_bunny import AsyncAdapter, RabbitMQConnectionData
+from bunny_storm import AsyncAdapter, RabbitMQConnectionData
 
 RABBIT_URI = "amqp://guest:guest@127.0.0.1:5672/"
 

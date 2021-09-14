@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""Tests for `tornado_bunny` package."""
+"""Tests for `bunny_storm` package."""
 
 import asyncio
 from logging import Logger
@@ -9,7 +9,7 @@ import pytest
 from aio_pika import IncomingMessage
 
 from tests.conftest import collect_future, consumer_teardown, publisher_teardown
-from tornado_bunny import AsyncAdapter, RabbitMQConnectionData, Publisher, Consumer
+from bunny_storm import AsyncAdapter, RabbitMQConnectionData, Publisher, Consumer
 
 
 @pytest.fixture(scope="function")

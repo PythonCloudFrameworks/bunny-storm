@@ -1,7 +1,7 @@
 import sys
 import asyncio
 
-from tornado_bunny import AsyncAdapter, RabbitMQConnectionData
+from bunny_storm import AsyncAdapter, RabbitMQConnectionData
 
 
 def calc_fib(message):
@@ -61,7 +61,7 @@ if __name__ == "__main__":
             )
         )
     )
-    # Using Tornado IO Loop
+    # Using asyncio IO Loop
     loop = asyncio.get_event_loop()
     rabbit_connection_data = RabbitMQConnectionData(username="test_user",
                                                     password="pass123",

@@ -6,7 +6,7 @@ from typing import Union
 
 import pytest
 
-from tornado_bunny import RabbitMQConnectionData, AsyncConnection, ChannelConfiguration, Consumer, Publisher, \
+from bunny_storm import RabbitMQConnectionData, AsyncConnection, ChannelConfiguration, Consumer, Publisher, \
     IntentionalCloseChannelError
 
 if sys.platform == 'win32':

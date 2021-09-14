@@ -4,7 +4,7 @@ import pytest
 from aio_pika import Message, IncomingMessage
 
 from tests.conftest import collect_future
-from tornado_bunny import Consumer, Publisher
+from bunny_storm import Consumer, Publisher
 
 
 class TestConsumerPublisher:
