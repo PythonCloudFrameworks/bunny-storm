@@ -1,4 +1,4 @@
-* tornado-bunny version:
+* bunny-storm version:
 * Python version:
 * Operating System:
 

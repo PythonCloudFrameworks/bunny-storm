@@ -4,7 +4,7 @@
 # You can set these variables from the command line.
 SPHINXOPTS    =
 SPHINXBUILD   = python -msphinx
-SPHINXPROJ    = tornado_bunny
+SPHINXPROJ    = bunny_storm
 SOURCEDIR     = .
 BUILDDIR      = _build
 

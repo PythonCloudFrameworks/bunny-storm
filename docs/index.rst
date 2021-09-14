@@ -1,4 +1,4 @@
-Welcome to tornado-bunny's documentation!
+Welcome to bunny-storm's documentation!
 ======================================
 
 .. toctree::

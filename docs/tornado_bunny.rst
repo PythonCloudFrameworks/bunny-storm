@@ -1,61 +1,61 @@
-tornado\_bunny package
+bunny\_storm package
 ======================
 
 Submodules
 ----------
 
-tornado\_bunny.async\_adapter module
+bunny\_storm.async\_adapter module
 ------------------------------------
 
-.. automodule:: tornado_bunny.async_adapter
+.. automodule:: bunny_storm.async_adapter
    :members:
    :undoc-members:
    :show-inheritance:
 
-tornado\_bunny.async\_connection module
+bunny\_storm.async\_connection module
 ---------------------------------------
 
-.. automodule:: tornado_bunny.async_connection
+.. automodule:: bunny_storm.async_connection
    :members:
    :undoc-members:
    :show-inheritance:
 
-tornado\_bunny.channel\_configuration module
+bunny\_storm.channel\_configuration module
 --------------------------------------------
 
-.. automodule:: tornado_bunny.channel_configuration
+.. automodule:: bunny_storm.channel_configuration
    :members:
    :undoc-members:
    :show-inheritance:
 
-tornado\_bunny.consumer module
+bunny\_storm.consumer module
 ------------------------------
 
-.. automodule:: tornado_bunny.consumer
+.. automodule:: bunny_storm.consumer
    :members:
    :undoc-members:
    :show-inheritance:
 
-tornado\_bunny.intentional\_close\_channel\_error module
+bunny\_storm.intentional\_close\_channel\_error module
 --------------------------------------------------------
 
-.. automodule:: tornado_bunny.intentional_close_channel_error
+.. automodule:: bunny_storm.intentional_close_channel_error
    :members:
    :undoc-members:
    :show-inheritance:
 
-tornado\_bunny.publisher module
+bunny\_storm.publisher module
 -------------------------------
 
-.. automodule:: tornado_bunny.publisher
+.. automodule:: bunny_storm.publisher
    :members:
    :undoc-members:
    :show-inheritance:
 
-tornado\_bunny.rabbitmq\_connection\_data module
+bunny\_storm.rabbitmq\_connection\_data module
 ------------------------------------------------
 
-.. automodule:: tornado_bunny.rabbitmq_connection_data
+.. automodule:: bunny_storm.rabbitmq_connection_data
    :members:
    :undoc-members:
    :show-inheritance:
@@ -63,7 +63,7 @@ tornado\_bunny.rabbitmq\_connection\_data module
 Module contents
 ---------------
 
-.. automodule:: tornado_bunny
+.. automodule:: bunny_storm
    :members:
    :undoc-members:
    :show-inheritance:

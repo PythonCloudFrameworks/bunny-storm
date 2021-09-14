@@ -2,7 +2,7 @@ import sys
 import asyncio
 
 from aiohttp import web
-from tornado_bunny import AsyncAdapter, RabbitMQConnectionData
+from bunny_storm import AsyncAdapter, RabbitMQConnectionData
 
 rabbit_adapter = None
 

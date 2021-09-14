@@ -1,1 +1,1 @@
-"""Unit test package for tornado_bunny."""
+"""Unit test package for bunny_storm."""

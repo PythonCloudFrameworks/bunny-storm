@@ -1,10 +1,10 @@
 ![](readme_media/logo_banner.png)
-![badge](https://github.com/odedshimon/tornado-bunny/workflows/Tornado%20Bunny%20CI/CD/badge.svg)
-[![PyPI version fury.io](https://badge.fury.io/py/tornado-bunny.svg)](https://pypi.python.org/pypi/tornado-bunny/)
-[![codecov](https://codecov.io/gh/PythonCloudFrameworks/tornado-bunny/branch/master/graph/badge.svg?token=1HWGBGCV0G)](https://codecov.io/gh/PythonCloudFrameworks/tornado-bunny)
-[![PyPI download month](https://img.shields.io/pypi/dm/tornado-bunny.svg)](https://pypi.python.org/pypi/tornado-bunny/)
-[![PyPI pyversions](https://img.shields.io/pypi/pyversions/tornado-bunny.svg)](https://pypi.python.org/pypi/tornado-bunny/)
-[![Ask Me Anything !](https://img.shields.io/badge/Ask%20me-anything-1abc9c.svg)](https://github.com/odedshimon/tornado-bunny/)
+![badge](https://github.com/odedshimon/bunny-storm/workflows/Bunny%20Storm%20CI/CD/badge.svg)
+[![PyPI version fury.io](https://badge.fury.io/py/bunny-storm.svg)](https://pypi.python.org/pypi/bunny-storm/)
+[![codecov](https://codecov.io/gh/PythonCloudFrameworks/bunny-storm/branch/master/graph/badge.svg?token=1HWGBGCV0G)](https://codecov.io/gh/PythonCloudFrameworks/bunny-storm)
+[![PyPI download month](https://img.shields.io/pypi/dm/bunny-storm.svg)](https://pypi.python.org/pypi/bunny-storm/)
+[![PyPI pyversions](https://img.shields.io/pypi/pyversions/bunny-storm.svg)](https://pypi.python.org/pypi/bunny-storm/)
+[![Ask Me Anything !](https://img.shields.io/badge/Ask%20me-anything-1abc9c.svg)](https://github.com/odedshimon/bunny-storm/)
 
 About
 =============
