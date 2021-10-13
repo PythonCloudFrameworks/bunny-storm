@@ -4,7 +4,7 @@ from logging import Logger
 import uuid
 import sys
 from types import FunctionType
-from typing import Union
+from typing import Union, Dict
 
 from aio_pika import Message, DeliveryMode, IncomingMessage
 
@@ -29,6 +29,8 @@ class AsyncAdapter:
     _logger: Logger
     _loop: asyncio.AbstractEventLoop
     _configuration: dict
+    _publishers: Dict[str, Publisher]
+    _consumers: Dict[str, Consumer]
 
     def __init__(self, rabbitmq_connection_data: RabbitMQConnectionData, configuration: dict, logger: Logger = None,
                  loop: asyncio.AbstractEventLoop = None, connection_properties: dict = None,
@@ -133,19 +135,25 @@ class AsyncAdapter:
         if properties is None:
             properties = dict(delivery_mode=DeliveryMode.PERSISTENT)
 
-        publisher = self._publishers.get(exchange)
-        if publisher is None:
-            raise KeyError(f"There is no publisher for the given exchange: {exchange}")
-
         try:
             message = Message(body, **properties)
-            await publisher.publish(
-                message, routing_key=routing_key, mandatory=mandatory, immediate=immediate, timeout=timeout)
+
+            # Check if the publish is to the default exchange
+            if exchange == "":
+                await self._default_publisher.default_exchange_publish(
+                    message, routing_key=routing_key, mandatory=mandatory, immediate=immediate, timeout=timeout)
+            else:
+                publisher = self._publishers.get(exchange)
+                if publisher is None:
+                    raise KeyError(f"There is no publisher for the given exchange: {exchange}")
+
+                await publisher.publish(
+                    message, routing_key=routing_key, mandatory=mandatory, immediate=immediate, timeout=timeout)
         except Exception:
             self.logger.exception("Failed to publish message")
             raise
 
-    async def receive(self, handler, queue: str, no_ack: bool = False) -> None:
+    async def receive(self, handler, queue: str, no_ack: bool = False, exclusive: bool = False) -> None:
         """
         Consume messages with the consumer relevant to the queue given.
         If the received message contains a "reply_to" parameter, reply to the route with the message handler's result.
@@ -153,13 +161,14 @@ class AsyncAdapter:
         :type handler: async def fn(logger, incoming_message)
         :param queue: The queue to consume from
         :param no_ack: Whether or not to ack incoming messages
+        :param exclusive: Whether to make the underlying consumer exclusive
         """
         consumer = self._consumers.get(queue)
         if consumer is None:
             raise KeyError(f"There is no consumer for the given queue: {queue}")
 
         try:
-            await consumer.consume(self._on_message, handler=handler, no_ack=no_ack)
+            await consumer.consume(self._on_message, handler=handler, no_ack=no_ack, exclusive=exclusive)
         except Exception:
             self.logger.exception("Failed to receive message.")
             raise
