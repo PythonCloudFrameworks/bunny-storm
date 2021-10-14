@@ -24,7 +24,7 @@ class Consumer:
     _auto_delete: bool
 
     _should_consume: bool
-    _consume_params: Union[Tuple[FunctionType, FunctionType, bool], None]
+    _consume_params: Union[Tuple[FunctionType, FunctionType, bool, bool], None]
 
     def __init__(self, connection: AsyncConnection, logger: Logger, loop: asyncio.AbstractEventLoop = None,
                  exchange_name: str = None, exchange_type: str = "topic", queue_name: str = "", routing_key: str = None,
@@ -115,21 +115,22 @@ class Consumer:
             auto_delete=self._auto_delete
         )
 
-    async def consume(self, on_message_callback, handler=None, no_ack: bool = False) -> None:
+    async def consume(self, on_message_callback, handler=None, no_ack: bool = False, exclusive: bool = False) -> None:
         """
         Begins consuming messages and triggering the given callback for each message consumed.
         :param on_message_callback: Callback to consume with
         :param handler: Handler to pass on_message_callback
         :param no_ack: Whether or not we want to skip ACKing the messages
+        :param exclusive: Whether to make this consumer exclusive
         """
         self.logger.info(f"[start consuming] routing key: {self._routing_key}; queue name: {self._queue_name}")
         await self._prepare_consume()
         self._should_consume = True
-        self._consume_params = (on_message_callback, handler, no_ack)
+        self._consume_params = (on_message_callback, handler, no_ack, exclusive)
         callback = on_message_callback if handler is None else functools.partial(on_message_callback, handler=handler)
 
         try:
-            await self._queue.consume(callback=callback, no_ack=no_ack)
+            await self._queue.consume(callback=callback, no_ack=no_ack, exclusive=exclusive)
         except aiormq.exceptions.ChannelNotFoundEntity as exc:
             self.logger.error(f"Queue {self._queue} was not found, resetting channel")
             self._on_channel_close(None, exc)

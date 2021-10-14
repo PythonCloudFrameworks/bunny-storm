@@ -90,7 +90,8 @@ class Publisher:
                                mandatory: bool = True,
                                immediate: bool = False,
                                timeout: Union[int, float, None] = None) -> Union[Exception, None]:
-        self.logger.info(f"Publishing message. exchange: {exchange}; routing_key: {routing_key}; message: {message}")
+        self.logger.info(
+            f"Publishing message. exchange: {exchange}; routing_key: {routing_key}; message: {message.body[:100]}")
         try:
             result = await exchange.publish(
                 message=message,
