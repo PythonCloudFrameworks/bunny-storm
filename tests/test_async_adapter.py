@@ -244,3 +244,17 @@ class TestAsyncAdapter:
                                      publish_exchange="echo_requests",
                                      timeout=0,
                                      ttl=10)
+
+    @pytest.mark.asyncio
+    async def test_stop(self, server_adapter: AsyncAdapter):
+        # Act
+        await server_adapter.stop(stop_loop=False)
+
+        # Assert
+        for consumer in server_adapter.consumers.values():
+            assert consumer.channel_config._channel is None
+
+        for publisher in server_adapter.publishers.values():
+            assert publisher.channel_config._channel is None
+
+        assert not server_adapter._connection.is_connected()

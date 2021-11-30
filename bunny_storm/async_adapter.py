@@ -99,6 +99,14 @@ class AsyncAdapter:
         """
         return self._logger
 
+    @property
+    def publishers(self) -> Dict[str, Publisher]:
+        return self._publishers
+
+    @property
+    def consumers(self) -> Dict[str, Consumer]:
+        return self._consumers
+
     def add_publisher(self, configuration: dict) -> Publisher:
         """
         Creates a Publisher with the given configurations and add to self._publishers
@@ -181,28 +189,27 @@ class AsyncAdapter:
         :param handler: Message handler
         """
         self.logger.info("Received a new message")
-        try:
-            result = await handler(self.logger, message)
-            self.logger.info("Message has been processed successfully")
-            if message.reply_to is not None:
-                self.logger.info(f"Sending result back to "
-                                 f"queue: {message.reply_to}, correlation id: {message.correlation_id}")
-                response_message = Message(body=result,
-                                           correlation_id=message.correlation_id,
-                                           reply_to=message.reply_to)
-                await self._default_publisher.default_exchange_publish(message=response_message,
-                                                                       routing_key=message.reply_to,
-                                                                       mandatory=False)
-                self.logger.info(f"Sent result back to caller. "
-                                 f"Queue: {message.reply_to}, correlation id: {message.correlation_id}")
-        except Exception:
-            self.logger.exception("Failed to handle received message.")
-            raise
-        finally:
-            message.ack()
+        async with message.process(ignore_processed=True) as message:
+            try:
+                result = await handler(self.logger, message)
+                self.logger.info("Message has been processed successfully")
+                if message.reply_to is not None:
+                    self.logger.info(f"Sending result back to "
+                                     f"queue: {message.reply_to}, correlation id: {message.correlation_id}")
+                    response_message = Message(body=result,
+                                               correlation_id=message.correlation_id,
+                                               reply_to=message.reply_to)
+                    await self._default_publisher.default_exchange_publish(message=response_message,
+                                                                           routing_key=message.reply_to,
+                                                                           mandatory=False)
+                    self.logger.info(f"Sent result back to caller. "
+                                     f"Queue: {message.reply_to}, correlation id: {message.correlation_id}")
+            except Exception:
+                self.logger.exception("Failed to handle received message.")
+                raise
 
-    async def rpc(self, body: bytes, receive_queue: str, publish_exchange: str, timeout: Union[int, float],
-                  ttl: int) -> bytes:
+    async def rpc(self, body: bytes, receive_queue: str, publish_exchange: str = None, routing_key: str = None,
+                  timeout: Union[int, float] = None, ttl: int = None) -> bytes:
         """
         RPC call. Consumes from the given receive_queue to wait for the result of the RPC call.
         Then publishes a message to the given publish_exchange with correlation_id and reply_to properties.
@@ -211,11 +218,16 @@ class AsyncAdapter:
         :param body: Message body
         :param receive_queue: The queue to consume from
         :param publish_exchange: The exchange to publish to
+        :param routing_key: Routing key to send the RPC message to
         :param timeout: RPC timeout (seconds)
         :param ttl: Message's time to live in the RabbitMQ queue (seconds)
         :return: RPC call result
         :raises: Exception contained in future if any
         """
+        if (publish_exchange is None and routing_key is None) or \
+                (publish_exchange is not None and routing_key is not None):
+            raise ValueError("Exactly one of publish_exchange or routing_key must be non-None")
+
         consumer = self._consumers.get(receive_queue)
         if consumer is None:
             raise KeyError(f"There is no consumer for the given queue: {receive_queue}")
@@ -224,8 +236,17 @@ class AsyncAdapter:
         await consumer.consume(self._rpc_response_callback)
 
         correlation_id = self._prepare_rpc_correlation_id()
-        properties = dict(correlation_id=correlation_id, reply_to=receive_queue, expiration=ttl * 1000)
-        await self.publish(body, publish_exchange, properties=properties, mandatory=True)
+        properties = dict(correlation_id=correlation_id, reply_to=receive_queue)
+        if ttl:
+            properties["expiration"] = ttl * 1000
+
+        await self.publish(
+            body=body,
+            exchange=publish_exchange or "",
+            routing_key=routing_key,
+            properties=properties,
+            mandatory=True
+        )
         self.logger.info(f"RPC message has been sent. {correlation_id}")
 
         future = await self._wait_result(correlation_id, timeout)
@@ -295,3 +316,16 @@ class AsyncAdapter:
         :return: Whether or not the RabbitMQ connection being used is connected
         """
         return self._connection.is_connected()
+
+    async def stop(self, stop_loop: bool = False) -> None:
+        """
+        Stop the adapter and teardown relevant objects
+        """
+        for consumer in self._consumers.values():
+            await consumer.close()
+        for publisher in self._publishers.values():
+            await publisher.close()
+        await self._connection.close()
+
+        if stop_loop:
+            self._loop.stop()
