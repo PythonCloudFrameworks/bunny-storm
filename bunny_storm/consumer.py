@@ -29,7 +29,7 @@ class Consumer:
     def __init__(self, connection: AsyncConnection, logger: Logger, loop: asyncio.AbstractEventLoop = None,
                  exchange_name: str = None, exchange_type: str = "topic", queue_name: str = "", routing_key: str = None,
                  durable: bool = False, auto_delete: bool = False, prefetch_count: int = 1, channel_number: int = None,
-                 publisher_confirms: bool = True, on_return_raises: bool = False):
+                 publisher_confirms: bool = True, on_return_raises: bool = False, **kwargs):
         """
         :param connection: AsyncConnection to pass to ChannelConfiguration
         :param logger: Logger
@@ -69,6 +69,9 @@ class Consumer:
         self._queue = None
         self._should_consume = False
         self._consume_params = None
+
+        for key, value in kwargs.items():
+            self._logger.warning(f"Consumer received unexpected keyword argument. Key: {key} Value: {value}")
 
     @property
     def logger(self) -> Logger:
@@ -134,3 +137,9 @@ class Consumer:
         except aiormq.exceptions.ChannelNotFoundEntity as exc:
             self.logger.error(f"Queue {self._queue} was not found, resetting channel")
             self._on_channel_close(None, exc)
+
+    async def close(self) -> None:
+        """
+        Close channel intentionally
+        """
+        await self.channel_config.close_channel(IntentionalCloseChannelError("Close channel"))

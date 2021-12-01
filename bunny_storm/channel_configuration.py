@@ -122,6 +122,8 @@ class ChannelConfiguration:
         If the channel is open, closes the channel.
         :param exc: Exception to pass for the channel's closing
         """
+        if not self._channel:
+            return
         if self._channel.is_closed:
             self._on_channel_close(None, exc)
         else:

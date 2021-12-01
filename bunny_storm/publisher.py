@@ -6,7 +6,7 @@ import aio_pika
 import aiormq
 from aio_pika import Message, RobustExchange
 
-from . import ChannelConfiguration, AsyncConnection
+from . import ChannelConfiguration, AsyncConnection, IntentionalCloseChannelError
 
 
 class Publisher:
@@ -24,7 +24,7 @@ class Publisher:
     def __init__(self, connection: AsyncConnection, logger: Logger, exchange_name: str,
                  loop: asyncio.AbstractEventLoop = None, exchange_type: str = "topic", routing_key: str = None,
                  durable: bool = False, auto_delete: bool = False, prefetch_count: int = 1,
-                 channel_number: int = None, publisher_confirms: bool = True, on_return_raises: bool = True):
+                 channel_number: int = None, publisher_confirms: bool = True, on_return_raises: bool = True, **kwargs):
         """
         :param connection: AsyncConnection to pass to ChannelConfiguration
         :param logger: Logger
@@ -56,6 +56,9 @@ class Publisher:
         self._durable = durable
         self._auto_delete = auto_delete
         self._exchange = None
+
+        for key, value in kwargs.items():
+            self._logger.warning(f"Publisher received unexpected keyword argument. Key: {key} Value: {value}")
 
     @property
     def logger(self) -> Logger:
@@ -157,3 +160,10 @@ class Publisher:
         if publish_exception:
             await self.channel_config.close_channel(publish_exception)
             await self.default_exchange_publish(message, routing_key, mandatory, immediate, timeout)
+
+    async def close(self) -> None:
+        """
+        Close channel intentionally
+        """
+        await self.channel_config.close_channel(IntentionalCloseChannelError("Close channel"))
+

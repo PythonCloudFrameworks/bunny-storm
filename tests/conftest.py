@@ -35,7 +35,7 @@ def rabbitmq_port() -> int:
 
 @pytest.fixture(scope="session")
 def rabbitmq_virtual_host() -> str:
-    return os.getenv("RABBITMQ_VIRTUAL_HOST", "/")
+    return os.getenv("RABBITMQ_VIRTUAL_HOST", "vhost")
 
 
 @pytest.fixture(scope="function")
