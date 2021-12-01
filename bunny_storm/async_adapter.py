@@ -209,7 +209,7 @@ class AsyncAdapter:
                 raise
 
     async def rpc(self, body: bytes, receive_queue: str, publish_exchange: str = None, routing_key: str = None,
-                  timeout: Union[int, float] = None, ttl: int = None) -> bytes:
+                  timeout: Union[int, float] = None, ttl: int = None, properties: dict = None) -> bytes:
         """
         RPC call. Consumes from the given receive_queue to wait for the result of the RPC call.
         Then publishes a message to the given publish_exchange with correlation_id and reply_to properties.
@@ -221,6 +221,7 @@ class AsyncAdapter:
         :param routing_key: Routing key to send the RPC message to
         :param timeout: RPC timeout (seconds)
         :param ttl: Message's time to live in the RabbitMQ queue (seconds)
+        :param properties: Message properties
         :return: RPC call result
         :raises: Exception contained in future if any
         """
@@ -236,7 +237,8 @@ class AsyncAdapter:
         await consumer.consume(self._rpc_response_callback)
 
         correlation_id = self._prepare_rpc_correlation_id()
-        properties = dict(correlation_id=correlation_id, reply_to=receive_queue)
+        properties = properties or dict()
+        properties.update(correlation_id=correlation_id, reply_to=receive_queue)
         if ttl:
             properties["expiration"] = ttl * 1000
 
