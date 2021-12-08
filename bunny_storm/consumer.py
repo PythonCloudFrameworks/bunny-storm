@@ -5,6 +5,7 @@ from types import FunctionType
 from typing import Union, Tuple
 
 import aiormq
+from aio_pika.queue import ConsumerTag
 from aio_pika.types import Sender
 
 from . import ChannelConfiguration, IntentionalCloseChannelError, AsyncConnection
@@ -25,6 +26,7 @@ class Consumer:
 
     _should_consume: bool
     _consume_params: Union[Tuple[FunctionType, FunctionType, bool, bool], None]
+    _consumer_tag: ConsumerTag
 
     def __init__(self, connection: AsyncConnection, logger: Logger, loop: asyncio.AbstractEventLoop = None,
                  exchange_name: str = None, exchange_type: str = "topic", queue_name: str = "", routing_key: str = None,
@@ -69,6 +71,7 @@ class Consumer:
         self._queue = None
         self._should_consume = False
         self._consume_params = None
+        self._consumer_tag = None
 
         for key, value in kwargs.items():
             self._logger.warning(f"Consumer received unexpected keyword argument. Key: {key} Value: {value}")
@@ -133,10 +136,15 @@ class Consumer:
         callback = on_message_callback if handler is None else functools.partial(on_message_callback, handler=handler)
 
         try:
-            await self._queue.consume(callback=callback, no_ack=no_ack, exclusive=exclusive)
+            self._consumer_tag = await self._queue.consume(callback=callback, no_ack=no_ack, exclusive=exclusive,
+                                                           consumer_tag=self._consumer_tag)
         except aiormq.exceptions.ChannelNotFoundEntity as exc:
             self.logger.error(f"Queue {self._queue} was not found, resetting channel")
             self._on_channel_close(None, exc)
+        except aiormq.exceptions.DuplicateConsumerTag:
+            # In case this consumer is already consuming the given queue, do not call consume again. Otherwise a
+            # consumer leak will occur.
+            pass
 
     async def close(self) -> None:
         """
