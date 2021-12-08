@@ -90,6 +90,10 @@ class Consumer:
         """
         return self._channel_config
 
+    @property
+    def consumer_tag(self) -> ConsumerTag:
+        return self._consumer_tag
+
     def _on_channel_close(self, sender: Sender, exc: BaseException) -> None:
         """
         Channel close callback which checks if we want to resume message consumption after the channel has been closed.
@@ -144,7 +148,8 @@ class Consumer:
         except aiormq.exceptions.DuplicateConsumerTag:
             # In case this consumer is already consuming the given queue, do not call consume again. Otherwise a
             # consumer leak will occur.
-            pass
+            self.logger.warning(f"Attempted to consume already consumed queue {self._queue} with tag "
+                                f"`{self._consumer_tag}")
 
     async def close(self) -> None:
         """

@@ -234,7 +234,8 @@ class AsyncAdapter:
             raise KeyError(f"There is no consumer for the given queue: {receive_queue}")
 
         self.logger.info(f"Preparing to rpc call. Publish exchange: {publish_exchange}; Receive queue: {receive_queue}")
-        await consumer.consume(self._rpc_response_callback)
+        if consumer.consumer_tag is None:
+            await consumer.consume(self._rpc_response_callback)
 
         correlation_id = self._prepare_rpc_correlation_id()
         properties = properties or dict()
