@@ -162,7 +162,8 @@ class ChannelConfiguration:
                                exchange_name: str,
                                exchange_type: str = "direct",
                                durable: bool = None,
-                               auto_delete: bool = False) -> RobustExchange:
+                               auto_delete: bool = False,
+                               **kwargs) -> RobustExchange:
         """
         Declares an exchange with the given parameters.
         If an exchange with the given name already exists in the channel, returns it instead of creating a new one.
@@ -180,6 +181,7 @@ class ChannelConfiguration:
                 type=exchange_type,
                 durable=durable,
                 auto_delete=auto_delete,
+                **kwargs
             )
             self.logger.info(f"Declared exchange: {exchange_name}")
         else:
@@ -191,7 +193,9 @@ class ChannelConfiguration:
                             exchange: RobustExchange = None,
                             routing_key: str = None,
                             durable: bool = None,
-                            auto_delete: bool = False) -> RobustQueue:
+                            exclusive: bool = None,
+                            auto_delete: bool = False,
+                            **kwargs) -> RobustQueue:
         """
         Declares a queue with the given parameters.
         If a queue with the given name already exists in the channel, gets it instead of creating a new one.
@@ -200,6 +204,7 @@ class ChannelConfiguration:
         :param exchange: Exchange to bind queue to
         :param routing_key: Routing key to bind queue with
         :param durable: Queue durability
+        :param exclusive: Queue exclusivity
         :param auto_delete: Whether or not the queue auto deletes
         :return: Declared or gotten queue
         """
@@ -209,7 +214,9 @@ class ChannelConfiguration:
             queue = await self._channel.declare_queue(
                 name=queue_name,
                 durable=durable,
+                exclusive=exclusive,
                 auto_delete=auto_delete,
+                **kwargs
             )
             self.logger.info(f"Declared queue: {queue_name}")
         else:
