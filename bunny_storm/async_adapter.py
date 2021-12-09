@@ -1,8 +1,8 @@
 import asyncio
 import logging
-from logging import Logger
-import uuid
 import sys
+import uuid
+from logging import Logger
 from types import FunctionType
 from typing import Union, Dict
 
@@ -161,7 +161,7 @@ class AsyncAdapter:
             self.logger.exception("Failed to publish message")
             raise
 
-    async def receive(self, handler, queue: str, no_ack: bool = False, exclusive: bool = False) -> None:
+    async def receive(self, handler, queue: str, no_ack: bool = False) -> None:
         """
         Consume messages with the consumer relevant to the queue given.
         If the received message contains a "reply_to" parameter, reply to the route with the message handler's result.
@@ -169,14 +169,13 @@ class AsyncAdapter:
         :type handler: async def fn(logger, incoming_message)
         :param queue: The queue to consume from
         :param no_ack: Whether or not to ack incoming messages
-        :param exclusive: Whether to make the underlying consumer exclusive
         """
         consumer = self._consumers.get(queue)
         if consumer is None:
             raise KeyError(f"There is no consumer for the given queue: {queue}")
 
         try:
-            await consumer.consume(self._on_message, handler=handler, no_ack=no_ack, exclusive=exclusive)
+            await consumer.consume(self._on_message, handler=handler, no_ack=no_ack)
         except Exception:
             self.logger.exception("Failed to receive message.")
             raise
@@ -226,7 +225,7 @@ class AsyncAdapter:
         :raises: Exception contained in future if any
         """
         if (publish_exchange is None and routing_key is None) or \
-                (publish_exchange is not None and routing_key is not None):
+            (publish_exchange is not None and routing_key is not None):
             raise ValueError("Exactly one of publish_exchange or routing_key must be non-None")
 
         consumer = self._consumers.get(receive_queue)

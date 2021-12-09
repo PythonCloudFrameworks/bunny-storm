@@ -34,7 +34,7 @@ async def test_channel_configuration_declare_exchange(channel_config: ChannelCon
     expected_exchange_name = "creation_test"
     expected_exchange_type = "direct"
     expected_durable = False
-    expected_auto_delete = True
+    expected_auto_delete = False
 
     # Act
     exchange = await channel_config.declare_exchange(expected_exchange_name,
@@ -63,28 +63,32 @@ async def test_channel_configuration_declare_exchange_queue(channel_config: Chan
     expected_queue_name = "creation_test_q"
     expected_routing_key = "#"
     expected_durable = False
-    expected_auto_delete = True
+    expected_exclusive = True
+    expected_auto_delete = False
 
     # Act
-    exchange = await channel_config.declare_exchange(expected_exchange_name,
-                                                     expected_exchange_type,
-                                                     expected_durable,
-                                                     expected_auto_delete)
+    exchange = await channel_config.declare_exchange(exchange_name=expected_exchange_name,
+                                                     exchange_type=expected_exchange_type,
+                                                     durable=expected_durable,
+                                                     auto_delete=expected_auto_delete)
     queue = await channel_config.declare_queue(expected_queue_name,
-                                               exchange,
-                                               expected_routing_key,
-                                               expected_durable,
-                                               expected_auto_delete)
+                                               exchange=exchange,
+                                               routing_key=expected_routing_key,
+                                               durable=expected_durable,
+                                               exclusive=expected_exclusive,
+                                               auto_delete=expected_auto_delete)
     queue_copy = await channel_config.declare_queue(expected_queue_name,
-                                                    exchange,
-                                                    expected_routing_key,
-                                                    expected_durable,
-                                                    expected_auto_delete)
+                                                    exchange=exchange,
+                                                    routing_key=expected_routing_key,
+                                                    durable=expected_durable,
+                                                    exclusive=expected_exclusive,
+                                                    auto_delete=expected_auto_delete)
 
     # Assert
     assert isinstance(queue, RobustQueue)
     assert queue is queue_copy
     assert queue.durable == expected_durable
+    assert queue.exclusive == expected_exclusive
     assert queue.auto_delete == expected_auto_delete
     assert list(queue._bindings) == [(exchange, expected_routing_key)]
 
