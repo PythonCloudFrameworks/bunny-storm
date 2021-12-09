@@ -20,11 +20,14 @@ class Publisher:
     _routing_key: str
     _durable: bool
     _auto_delete: bool
+    _exchange_kwargs: dict
+    _exchange: RobustExchange
 
     def __init__(self, connection: AsyncConnection, logger: Logger, exchange_name: str,
                  loop: asyncio.AbstractEventLoop = None, exchange_type: str = "topic", routing_key: str = None,
                  durable: bool = False, auto_delete: bool = False, prefetch_count: int = 1,
-                 channel_number: int = None, publisher_confirms: bool = True, on_return_raises: bool = True, **kwargs):
+                 channel_number: int = None, publisher_confirms: bool = True, on_return_raises: bool = True,
+                 exchange_kwargs: dict = None, **kwargs):
         """
         :param connection: AsyncConnection to pass to ChannelConfiguration
         :param logger: Logger
@@ -38,6 +41,7 @@ class Publisher:
         :param channel_number: Channel number for ChannelConfiguration
         :param publisher_confirms: Publisher confirms for ChannelConfiguration
         :param on_return_raises: On return raises for ChannelConfiguration
+        :param queue_kwargs: Kwargs for queue declaration
         """
         self._channel_config = ChannelConfiguration(
             connection,
@@ -55,6 +59,7 @@ class Publisher:
         self._routing_key = routing_key
         self._durable = durable
         self._auto_delete = auto_delete
+        self._exchange_kwargs = exchange_kwargs or dict()
         self._exchange = None
 
         for key, value in kwargs.items():
@@ -83,7 +88,8 @@ class Publisher:
             self._exchange_name,
             exchange_type=self._exchange_type,
             durable=self._durable,
-            auto_delete=self._auto_delete
+            auto_delete=self._auto_delete,
+            **self._exchange_kwargs
         )
 
     async def _publish_message(self,
@@ -166,4 +172,3 @@ class Publisher:
         Close channel intentionally
         """
         await self.channel_config.close_channel(IntentionalCloseChannelError("Close channel"))
-

@@ -24,6 +24,8 @@ class Consumer:
     _durable: bool
     _exclusive_queue: bool
     _auto_delete: bool
+    _exchange_kwargs: dict
+    _queue_kwargs: dict
 
     _should_consume: bool
     _consume_params: Optional[Tuple[FunctionType, FunctionType, bool]]
@@ -34,7 +36,7 @@ class Consumer:
                  exchange_name: str = None, exchange_type: str = "topic", queue_name: str = "", routing_key: str = None,
                  durable: bool = False, exclusive_queue: bool = False, auto_delete: bool = False,
                  prefetch_count: int = 1, channel_number: int = None, publisher_confirms: bool = True,
-                 on_return_raises: bool = False, **kwargs):
+                 on_return_raises: bool = False, exchange_kwargs: dict = None, queue_kwargs: dict = None, **kwargs):
         """
         :param connection: AsyncConnection to pass to ChannelConfiguration
         :param logger: Logger
@@ -50,6 +52,8 @@ class Consumer:
         :param channel_number: Channel number for ChannelConfiguration
         :param publisher_confirms: Publisher confirms for ChannelConfiguration
         :param on_return_raises: On return raises for ChannelConfiguration
+        :param exchange_kwargs: Kwargs for exchange declaration
+        :param queue_kwargs: Kwargs for queue declaration
         """
         self._channel_config = ChannelConfiguration(
             connection,
@@ -71,6 +75,8 @@ class Consumer:
         self._durable = durable
         self._exclusive_queue = exclusive_queue
         self._auto_delete = auto_delete
+        self._exchange_kwargs = exchange_kwargs or dict()
+        self._queue_kwargs = queue_kwargs or dict()
 
         self._exchange = None
         self._queue = None
@@ -109,23 +115,21 @@ class Consumer:
         if self._should_consume and not isinstance(exc, IntentionalCloseChannelError):
             self._loop.create_task(self.consume(*self._consume_params))
 
-    async def _prepare_consume(self, exchange_kwargs: dict = None, queue_kwargs: dict = None) -> None:
+    async def _prepare_consume(self) -> None:
         """
         Prepares channel, queue, and exchange (if necessary) so the instance can begin consuming messages.
         """
         await self.channel_config.ensure_channel()
         if self._exchange_name:
-            exchange_kwargs = exchange_kwargs or dict()
             self._exchange = await self.channel_config.declare_exchange(
                 self._exchange_name,
                 exchange_type=self._exchange_type,
                 durable=self._durable,
                 auto_delete=self._auto_delete,
-                **exchange_kwargs
+                **self._exchange_kwargs
             )
         else:
             self._exchange = None
-        queue_kwargs = queue_kwargs or dict()
         self._queue = await self.channel_config.declare_queue(
             queue_name=self._queue_name,
             exchange=self._exchange,
@@ -133,21 +137,18 @@ class Consumer:
             durable=self._durable,
             exclusive=self._exclusive_queue,
             auto_delete=self._auto_delete,
-            **queue_kwargs
+            **self._queue_kwargs
         )
 
-    async def consume(self, on_message_callback, handler=None, no_ack: bool = False, exchange_kwargs: dict = None,
-                      queue_kwargs: dict = None) -> None:
+    async def consume(self, on_message_callback, handler=None, no_ack: bool = False) -> None:
         """
         Begins consuming messages and triggering the given callback for each message consumed.
         :param on_message_callback: Callback to consume with
         :param handler: Handler to pass on_message_callback
         :param no_ack: Whether or not we want to skip ACKing the messages
-        :param exchange_kwargs: Kwargs to pass to exchange declaration
-        :param queue_kwargs: Kwargs to pass to queue declaration
         """
         self.logger.info(f"[start consuming] routing key: {self._routing_key}; queue name: {self._queue_name}")
-        await self._prepare_consume(exchange_kwargs=exchange_kwargs, queue_kwargs=queue_kwargs)
+        await self._prepare_consume()
         self._should_consume = True
         self._consume_params = (on_message_callback, handler, no_ack)
         callback = on_message_callback if handler is None else functools.partial(on_message_callback, handler=handler)
