@@ -1,6 +1,6 @@
 import asyncio
 from logging import Logger
-from typing import Union, List
+from typing import List, Optional
 
 from aio_pika import RobustChannel, RobustExchange, RobustQueue
 from aio_pika.types import CloseCallbackType, Sender
@@ -25,7 +25,7 @@ class ChannelConfiguration:
     _on_return_raises: bool
 
     _channel_lock: asyncio.Lock
-    _channel: Union[RobustChannel, None]
+    _channel: Optional[RobustChannel]
     _started: bool
 
     _channel_close_callbacks: List[CloseCallbackType]
@@ -62,30 +62,24 @@ class ChannelConfiguration:
     def started(self) -> bool:
         """
         Whether or not the channel has been started
-        :return: self._started
         """
         return self._started
 
     @property
     def publisher_confirms(self) -> bool:
-        """
-        :return: self._publisher_confirms
-        """
         return self._publisher_confirms
 
     @property
     def logger(self) -> Logger:
-        """
-        :return: self._logger
-        """
         return self._logger
 
     @property
     def loop(self) -> asyncio.AbstractEventLoop:
-        """
-        :return: self._loop
-        """
         return self._loop
+
+    @property
+    def connection(self) -> AsyncConnection:
+        return self._connection
 
     async def get_default_exchange(self) -> RobustExchange:
         await self.ensure_channel()

@@ -29,7 +29,7 @@ class Consumer:
 
     _should_consume: bool
     _consume_params: Optional[Tuple[FunctionType, FunctionType, bool]]
-    _consumer_tag: ConsumerTag
+    _consumer_tag: Optional[ConsumerTag]
     _consumer_lock: asyncio.Lock
 
     def __init__(self, connection: AsyncConnection, logger: Logger, loop: asyncio.AbstractEventLoop = None,
@@ -90,16 +90,10 @@ class Consumer:
 
     @property
     def logger(self) -> Logger:
-        """
-        :return: self._logger
-        """
         return self._logger
 
     @property
     def channel_config(self) -> ChannelConfiguration:
-        """
-        :return: self._channel_config
-        """
         return self._channel_config
 
     @property

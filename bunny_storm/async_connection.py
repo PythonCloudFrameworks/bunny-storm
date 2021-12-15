@@ -25,7 +25,7 @@ class AsyncConnection:
     _connection_lock: asyncio.Lock
 
     def __init__(self, rabbitmq_connection_data: RabbitMQConnectionData, logger: Logger,
-                 loop: asyncio.AbstractEventLoop = None, properties: dict = None,  timeout: Union[int, float] = 10,
+                 loop: asyncio.AbstractEventLoop = None, properties: dict = None, timeout: Union[int, float] = 10,
                  connection_attempts: int = 5, attempt_backoff: int = 5):
         """
         :param rabbitmq_connection_data: RabbitMQConnectionData instance containing desired connection credentials
@@ -51,10 +51,20 @@ class AsyncConnection:
 
     @property
     def logger(self) -> Logger:
-        """
-        :return: self._logger
-        """
         return self._logger
+
+    async def wait_connected(self):
+        """
+        Wait for the connected event of the underlying RobustConnection object
+        It waits for `connection_attempts * connection attempt backoff` seconds before stopping the loop
+        """
+        try:
+            await asyncio.wait_for(
+                self._connection.connected.wait(), timeout=self._connection_attempts * self._attempt_backoff)
+        except asyncio.TimeoutError:
+            self.logger.error("Failed to connect to RabbitMQ, stopping loop")
+            self._loop.stop()
+            raise
 
     async def get_connection(self) -> RobustConnection:
         """
