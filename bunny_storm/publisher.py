@@ -23,7 +23,9 @@ def _retry_publish_exception(coroutine_function):
                       routing_key: str = None,
                       mandatory: bool = True,
                       immediate: bool = False,
-                      timeout: Union[int, float, None] = None) -> None:
+                      timeout: Union[int, float, None] = None,
+                      max_retry_count: int = 5,
+                      retry_count: int = 0) -> None:
         publish_exception = None
 
         try:
@@ -51,7 +53,9 @@ def _retry_publish_exception(coroutine_function):
             else:
                 await self.channel_config.close_channel(publish_exception)
 
-            await publish(self, message, routing_key, mandatory, immediate, timeout)
+            if retry_count < max_retry_count:
+                retry_count = retry_count + 1
+                await publish(self, message, routing_key, mandatory, immediate, timeout, retry_count, max_retry_count)
 
     return publish
 
@@ -160,7 +164,8 @@ class Publisher:
                       routing_key: str = None,
                       mandatory: bool = True,
                       immediate: bool = False,
-                      timeout: Union[int, float, None] = None) -> None:
+                      timeout: Union[int, float, None] = None,
+                      max_retry_count: int = 5) -> None:
         """
         Publishes the given message to the desired exchange with the desired routing key
         :param message: Message to publish
@@ -168,6 +173,7 @@ class Publisher:
         :param mandatory: Whether or not the message is mandatory
         :param immediate: Whether or not the message should be immediate
         :param timeout: Publish timeout
+        :param max_retry_count: Publish max retry count
         """
         await self._prepare_publish()
         await self._publish_message(
@@ -185,7 +191,9 @@ class Publisher:
                                        routing_key: str,
                                        mandatory: bool = True,
                                        immediate: bool = False,
-                                       timeout: Union[int, float, None] = None) -> None:
+                                       timeout: Union[int, float, None] = None,
+                                       max_retry_count: int = 5
+                                       ) -> None:
         exchange = await self.channel_config.get_default_exchange()
         await self._publish_message(
             exchange=exchange,

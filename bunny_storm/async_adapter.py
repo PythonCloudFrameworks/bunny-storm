@@ -128,7 +128,8 @@ class AsyncAdapter:
         return consumer
 
     async def publish(self, body: bytes, exchange: str, routing_key: str = None, properties: dict = None,
-                      mandatory: bool = True, immediate: bool = False, timeout: Union[int, float, None] = None):
+                      mandatory: bool = True, immediate: bool = False, timeout: Union[int, float, None] = None,
+                      max_retry_count: int = 5):
         """
         Publish a message using the publisher relevant to the exchange given.
         :param body: message
@@ -138,6 +139,7 @@ class AsyncAdapter:
         :param mandatory: RabbitMQ publish mandatory param
         :param immediate: Whether or not message should be immediate
         :param timeout: Publish timeout
+        :param max_retry_count: Publish max retry count
         """
         self.logger.info("Trying to publish message")
         if properties is None:
@@ -149,14 +151,16 @@ class AsyncAdapter:
             # Check if the publish is to the default exchange
             if exchange == "":
                 await self._default_publisher.default_exchange_publish(
-                    message, routing_key=routing_key, mandatory=mandatory, immediate=immediate, timeout=timeout)
+                    message, routing_key=routing_key, mandatory=mandatory, immediate=immediate, timeout=timeout,
+                    max_retry_count=max_retry_count)
             else:
                 publisher = self._publishers.get(exchange)
                 if publisher is None:
                     raise KeyError(f"There is no publisher for the given exchange: {exchange}")
 
                 await publisher.publish(
-                    message, routing_key=routing_key, mandatory=mandatory, immediate=immediate, timeout=timeout)
+                    message, routing_key=routing_key, mandatory=mandatory, immediate=immediate, timeout=timeout,
+                    max_retry_count=max_retry_count)
         except Exception:
             self.logger.exception("Failed to publish message")
             raise
@@ -208,7 +212,8 @@ class AsyncAdapter:
                 raise
 
     async def rpc(self, body: bytes, receive_queue: str, publish_exchange: str = None, routing_key: str = None,
-                  timeout: Union[int, float] = None, ttl: int = None, properties: dict = None) -> bytes:
+                  timeout: Union[int, float] = None, ttl: int = None, properties: dict = None,
+                  publisher_max_retry_count: int = 5) -> bytes:
         """
         RPC call. Consumes from the given receive_queue to wait for the result of the RPC call.
         Then publishes a message to the given publish_exchange with correlation_id and reply_to properties.
@@ -221,6 +226,7 @@ class AsyncAdapter:
         :param timeout: RPC timeout (seconds)
         :param ttl: Message's time to live in the RabbitMQ queue (seconds)
         :param properties: Message properties
+        :param publisher_max_retry_count: Publish max retry count
         :return: RPC call result
         :raises: Exception contained in future if any
         """
@@ -247,7 +253,8 @@ class AsyncAdapter:
             exchange=publish_exchange or "",
             routing_key=routing_key,
             properties=properties,
-            mandatory=True
+            mandatory=True,
+            max_retry_count=publisher_max_retry_count
         )
         self.logger.info(f"RPC message has been sent. {correlation_id}")
 
