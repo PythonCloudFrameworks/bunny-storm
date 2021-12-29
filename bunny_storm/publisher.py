@@ -23,7 +23,9 @@ def _retry_publish_exception(coroutine_function):
                       routing_key: str = None,
                       mandatory: bool = True,
                       immediate: bool = False,
-                      timeout: Union[int, float, None] = None) -> None:
+                      timeout: Union[int, float, None] = None,
+                      retry_count: int = 0,
+                      max_retry_count: int = 5) -> None:
         publish_exception = None
 
         try:
@@ -51,7 +53,9 @@ def _retry_publish_exception(coroutine_function):
             else:
                 await self.channel_config.close_channel(publish_exception)
 
-            await publish(self, message, routing_key, mandatory, immediate, timeout)
+            if retry_count < max_retry_count:
+                retry_count = retry_count + 1
+                await publish(self, message, routing_key, mandatory, immediate, timeout, retry_count, max_retry_count)
 
     return publish
 
