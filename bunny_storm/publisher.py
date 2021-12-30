@@ -55,7 +55,7 @@ def _retry_publish_exception(coroutine_function):
 
             if retry_count < max_retry_count:
                 retry_count = retry_count + 1
-                await publish(self, message, routing_key, mandatory, immediate, timeout, retry_count, max_retry_count)
+                await publish(self, message, routing_key, mandatory, immediate, timeout, max_retry_count, retry_count)
 
     return publish
 
